@@ -1,7 +1,7 @@
 package httphandler
 
 import (
-	"github.com/fewlinesco/kit/erroring"
+	"github.com/fewlinesco/go-pkg/erroring"
 	"net/http"
 )
 

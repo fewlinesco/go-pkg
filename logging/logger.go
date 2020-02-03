@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"github.com/fewlinesco/kit/logging/internal"
+	"github.com/fewlinesco/go-pkg/logging/internal"
 )
 
 type Field interface {
