@@ -1,4 +1,4 @@
-module github.com/fewlinesco/pkg
+module github.com/fewlinesco/go-pkg
 
 go 1.13
 
