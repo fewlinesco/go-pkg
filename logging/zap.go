@@ -10,6 +10,15 @@ type ZapLogger struct {
 	L *zap.Logger
 }
 
+func NewZapLoggerForProduction() (Logger, func(), error) {
+	zapLogger, err := zap.NewProduction()
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrCantStart, err)
+	}
+
+	return NewZapLogger(zapLogger), func() { zapLogger.Sync() }, nil
+}
+
 func NewZapLogger(l *zap.Logger) Logger {
 	return &ZapLogger{L: l.WithOptions(zap.AddCallerSkip(1))}
 }

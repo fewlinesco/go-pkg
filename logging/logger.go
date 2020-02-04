@@ -1,7 +1,12 @@
 package logging
 
 import (
+	"errors"
 	"github.com/fewlinesco/go-pkg/logging/internal"
+)
+
+var (
+	ErrCantStart = errors.New("can't start logger")
 )
 
 type Field interface {
@@ -32,4 +37,8 @@ type Logger interface {
 	Error(string)
 	Info(string)
 	Infof(string, ...interface{})
+}
+
+func NewDefaultLogger() (Logger, func(), error) {
+	return NewZapLoggerForProduction()
 }
