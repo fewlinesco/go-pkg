@@ -7,11 +7,6 @@ import (
 )
 
 var (
-	ErrNoMigrations            = errors.New("no migrations")
-	ErrInvalidMigrationVersion = errors.New("invalid migration version")
-	ErrMigrationTableLocked    = errors.New("database is locked. it requires a manual fix")
-	ErrCantMigrate             = errors.New("can't migrate")
-
 	ErrCantConnect = errors.New("can't connect to postgres")
 
 	ErrUnkown = errors.New("unknown error")
