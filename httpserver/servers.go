@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -42,7 +43,11 @@ func (s *Servers) Start() {
 	for _, server := range s.servers {
 		server.Start()
 
-		s.messages <- ServersMessage{Server: server, State: ServersMessageStateStarted, Message: "server started"}
+		s.messages <- ServersMessage{
+			Server:  server,
+			State:   ServersMessageStateStarted,
+			Message: fmt.Sprintf("server started on port %s", server.HTTPServer.Addr),
+		}
 
 		go func(server *Server) {
 			select {

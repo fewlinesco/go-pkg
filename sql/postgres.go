@@ -23,6 +23,14 @@ func NewPostgresClient(c Config) (*PostgresClient, error) {
 	return &PostgresClient{DBx: dbx}, nil
 }
 
+func (c *PostgresClient) Get(dest interface{}, query string, arg interface{}) error {
+	return c.DBx.Get(dest, query, arg)
+}
+
+func (c *PostgresClient) Select(dest interface{}, query string, arg interface{}) error {
+	return c.DBx.Select(dest, query, arg)
+}
+
 func (c *PostgresClient) NamedExec(query string, arg interface{}) error {
 	tx, err := c.DBx.Beginx()
 	if err != nil {
