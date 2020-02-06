@@ -10,8 +10,8 @@ import (
 )
 
 type JaegerConfig struct {
-	AgentHost string
-	AgentPort string
+	AgentHost string `json:"agent_host"`
+	AgentPort string `json:"agent_port"`
 }
 
 func NewJaegerTracer(serviceName string, config JaegerConfig) (opentracing.Tracer, func(), error) {
