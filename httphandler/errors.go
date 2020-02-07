@@ -56,22 +56,18 @@ func (r UnprocessableEntityError) HTTPCode() int {
 }
 
 type NotFoundHTTPError struct {
-	Code       int    `json:"code"`
-	Message    string `json:"message"`
-	Resource   string `json:"resource"`
-	Identifier string `json:"identifier"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 func (r NotFoundHTTPError) HTTPCode() int {
 	return r.Code
 }
 
-func NewNotFoundError(resource string, code string) NotFoundHTTPError {
+func NewNotFoundError() NotFoundHTTPError {
 	return NotFoundHTTPError{
-		Code:       http.StatusBadRequest,
-		Message:    "resource not found",
-		Resource:   resource,
-		Identifier: code,
+		Code:    http.StatusNotFound,
+		Message: "resource not found",
 	}
 }
 

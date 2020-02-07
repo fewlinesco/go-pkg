@@ -1,9 +1,70 @@
 package validating
 
 import (
-	"github.com/go-ozzo/ozzo-validation/v3"
+	"errors"
+	"github.com/fewlinesco/go-pkg/erroring"
+	"github.com/go-ozzo/ozzo-validation/v4"
 	"reflect"
 )
+
+func ValidateRequire(operation erroring.Operation, inputPtr interface{}, fields ...interface{}) error {
+	rules := make([]*validation.FieldRules, len(fields))
+	for index, field := range fields {
+		rules[index] = validation.Field(field, validation.Required)
+	}
+
+	return toErr(operation, validation.ValidateStruct(inputPtr, rules...),
+		erroring.KindMissingRequiredArguments, "missing required parameter")
+}
+
+func ValidateBusiness(operation erroring.Operation, inputPtr interface{}, rules ...*validation.FieldRules) error {
+	return toErr(operation, validation.ValidateStruct(inputPtr, rules...),
+		erroring.KindUnprocessablePayload, "invalid parameters")
+}
+
+func ErrAlreadyTaken(operation erroring.Operation, inputPtr interface{}, field interface{}) error {
+	rule := validation.Field(field, validation.By(isAlreadyTaken))
+
+	return ValidateBusiness(operation, inputPtr, rule)
+}
+
+func isAlreadyTaken(interface{}) error {
+	return errors.New("already taken")
+}
+
+func toErr(operation erroring.Operation, err error, kind erroring.Kind, reason string) error {
+	if err == nil {
+		return nil
+	}
+
+	e, ok := err.(validation.Errors)
+	if !ok {
+		return &erroring.Error{
+			Operation: operation,
+			Kind:      erroring.KindUnexpected,
+			Source:    erroring.SourceMe,
+			Err:       e,
+		}
+	}
+
+	return &erroring.Error{
+		Operation:    operation,
+		Kind:         kind,
+		Source:       erroring.SourceClient,
+		Err:          errors.New(reason),
+		RelevantData: toErrMap(map[string]error(e)),
+	}
+}
+
+func toErrMap(errors map[string]error) map[string]string {
+	errs := make(map[string]string, len(errors))
+
+	for k, v := range errors {
+		errs[k] = v.Error()
+	}
+
+	return errs
+}
 
 type Business struct {
 	Ptr    ValidationError

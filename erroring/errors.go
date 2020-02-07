@@ -1,5 +1,69 @@
 package erroring
 
+type Source string
+
+type Kind string
+
+type Operation string
+
+func (o Operation) String() string {
+	return string(o)
+}
+
+const (
+	KindUnauthorized             Kind = "unauthorized"
+	KindNotFound                      = "not_found"
+	KindUnparsable                    = "unparsable_format"
+	KindMissingRequiredArguments      = "missing_required_arguments"
+	KindUnprocessablePayload          = "unprocessable_payload"
+	KindRemoteFailure                 = "remote_failure"
+	KindUnexpected                    = "unexpected"
+
+	SourceClient  Source = "client"
+	SourceServer         = "server"
+	SourceNetwork        = "network"
+	SourceMe             = "application"
+	SourceUnknown        = "unknown"
+)
+
+type Error struct {
+	Kind         Kind
+	Operation    Operation
+	Source       Source
+	Err          error
+	RelevantData map[string]string
+}
+
+func (e *Error) Error() string {
+	return e.Err.Error()
+}
+
+func (e *Error) Stacktrace() []string {
+	ops := []string{string(e.Operation)}
+
+	err, ok := e.Unwrap().(*Error)
+	if !ok {
+		return ops
+	}
+
+	ops = append(ops, err.Stacktrace()...)
+
+	return ops
+}
+
+func (e Error) Unwrap() error {
+	if e.Err == nil {
+		return nil
+	}
+
+	_, ok := e.Err.(*Error)
+	if !ok {
+		return nil
+	}
+
+	return e.Err
+}
+
 type BusinessError interface {
 	error
 	BusinessError() string

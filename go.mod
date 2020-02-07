@@ -4,7 +4,8 @@ go 1.13
 
 require (
 	github.com/DataDog/datadog-go v3.4.0+incompatible // indirect
-	github.com/go-ozzo/ozzo-validation/v3 v3.8.1
+	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
+	github.com/go-ozzo/ozzo-validation/v4 v4.0.0
 	github.com/golang-migrate/migrate/v4 v4.8.0
 	github.com/google/uuid v1.1.1
 	github.com/jmoiron/sqlx v1.2.0
