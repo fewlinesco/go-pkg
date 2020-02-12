@@ -29,10 +29,19 @@ type MockContext struct {
 	Fields []logging.Field
 }
 
+type MockLoggerLine struct {
+	Message  string
+	Fields   []logging.Field
+	Severity MockLoggerSeverity
+}
+
 func (l *MockContext) AssertLine(t *testing.T, linenumber int, severity MockLoggerSeverity, msg string, fields ...logging.Field) {
+	t.Helper()
+
 	line, err := l.Line(linenumber)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Errorf(err.Error())
+		return
 	}
 
 	if line.Severity != severity {
@@ -48,9 +57,9 @@ func (l *MockContext) AssertLine(t *testing.T, linenumber int, severity MockLogg
 	}
 
 	for _, expectedField := range fields {
-		actualField, err := line.GetField(expectedField.GetName())
+		actualField, err := getLogField(line.Fields, expectedField.GetName())
 		if err != nil {
-			t.Errorf("%s: %w", expectedField.GetName(), err)
+			t.Errorf("%s: missing in the log line", expectedField.GetName())
 
 			continue
 		}
@@ -65,10 +74,19 @@ func (l *MockContext) AssertLine(t *testing.T, linenumber int, severity MockLogg
 			t.Errorf("log line: %d: unexpected field value for %s. want: %s; have: %s", linenumber, expectedField.GetName(), expectedField.GetValue(), actualField.GetValue())
 		}
 	}
+
+	for _, actualField := range line.Fields {
+		_, err := getLogField(fields, actualField.GetName())
+		if err != nil {
+			t.Errorf("%s: missing in the assertion", actualField.GetName())
+
+			continue
+		}
+	}
 }
 
 func (l *MockContext) Line(linenumber int) (MockLoggerLine, error) {
-	if linenumber > len(l.Logger.Lines) || linenumber < 0 {
+	if linenumber >= len(l.Logger.Lines) || linenumber < 0 {
 		return MockLoggerLine{}, fmt.Errorf("index out of bound. min: %d; max: %d", 0, len(l.Logger.Lines))
 	}
 
@@ -95,4 +113,14 @@ func (l *MockContext) Infof(format string, v ...interface{}) {
 
 	line := MockLoggerLine{Message: msg, Severity: MockLoggerSeverityInfo, Fields: l.Fields}
 	l.Logger.Lines = append(l.Logger.Lines, line)
+}
+
+func getLogField(fields []logging.Field, name string) (logging.Field, error) {
+	for _, f := range fields {
+		if f.GetName() == name {
+			return f, nil
+		}
+	}
+
+	return nil, fmt.Errorf("field not found")
 }

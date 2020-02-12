@@ -37,6 +37,22 @@ func (b BadRequestError) HTTPCode() int {
 	return b.Code
 }
 
+func NewConflictError(msg string) ConflictError {
+	return ConflictError{
+		Code:    http.StatusConflict,
+		Message: msg,
+	}
+}
+
+type ConflictError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+func (c ConflictError) HTTPCode() int {
+	return c.Code
+}
+
 func NewUnprocessableEntityError(detail map[string]string) UnprocessableEntityError {
 	return UnprocessableEntityError{
 		Code:    http.StatusUnprocessableEntity,

@@ -12,6 +12,7 @@ func (o Operation) String() string {
 
 const (
 	KindUnauthorized             Kind = "unauthorized"
+	KindInconsistentIndempotency      = "inconsistent_idempotency"
 	KindNotFound                      = "not_found"
 	KindUnparsable                    = "unparsable_format"
 	KindMissingRequiredArguments      = "missing_required_arguments"

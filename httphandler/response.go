@@ -30,6 +30,8 @@ func WriteJSONError(w http.ResponseWriter, logger logging.Logger, operation erro
 		response = NewUnprocessableEntityError(systemErr.RelevantData)
 	case erroring.KindNotFound:
 		response = NewNotFoundError()
+	case erroring.KindInconsistentIndempotency:
+		response = NewConflictError(systemErr.Error())
 	default:
 		response = InternalServerError
 	}
