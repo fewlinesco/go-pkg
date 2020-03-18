@@ -5,11 +5,12 @@ import (
 )
 
 type ErrorMessage string
+type ErrorDetails map[string]string
 
 type Error struct {
-	Code    int               `json:"code"`
-	Message ErrorMessage      `json:"message"`
-	Details map[string]string `json:"details,omitempty"`
+	Code    int          `json:"code"`
+	Message ErrorMessage `json:"message"`
+	Details ErrorDetails `json:"details,omitempty"`
 }
 
 func (e *Error) Error() string {
@@ -28,7 +29,7 @@ func NewErrUnmanagedResponse(traceid string) error {
 	}
 }
 
-func NewErrBadRequestResponse(details map[string]string) error {
+func NewErrBadRequestResponse(details ErrorDetails) error {
 	return &Error{
 		Code:    http.StatusBadRequest,
 		Message: BadRequestMessage,

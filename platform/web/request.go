@@ -37,6 +37,10 @@ func Decode(r *http.Request, val interface{}) error {
 		return fmt.Errorf("%w", NewErrBadRequestResponse(nil))
 	}
 
+	return Validate(val, NewErrBadRequestResponse)
+}
+
+func Validate(val interface{}, errBuilder func(ErrorDetails) error) error {
 	if err := validate.Struct(val); err != nil {
 		verrors, ok := err.(validator.ValidationErrors)
 		if !ok {
@@ -45,12 +49,12 @@ func Decode(r *http.Request, val interface{}) error {
 
 		lang, _ := translator.GetTranslator("en")
 
-		details := make(map[string]string)
+		details := make(ErrorDetails)
 		for _, verror := range verrors {
 			details[verror.Field()] = verror.Translate(lang)
 		}
 
-		return fmt.Errorf("%w", NewErrBadRequestResponse(details))
+		return fmt.Errorf("%w", errBuilder(details))
 	}
 
 	return nil
