@@ -15,6 +15,7 @@ import (
 
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/logging"
+	"github.com/fewlinesco/go-pkg/platform/tracing"
 	"github.com/fewlinesco/go-pkg/platform/web"
 )
 
@@ -22,6 +23,7 @@ type ClassicalApplicationConfig struct {
 	API        web.ServerConfig `json:"api"`
 	Database   database.Config  `json:"database"`
 	Monitoring web.ServerConfig `json:"monitoring"`
+	Tracing    tracing.Config   `json:"tracing"`
 }
 
 type ClassicalApplication struct {
@@ -36,6 +38,7 @@ var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
 	API:        web.DefaultServerConfig,
 	Monitoring: web.DefaultMonitoringConfig,
 	Database:   database.DefaultConfig,
+	Tracing:    tracing.DefaultConfig,
 }
 
 func ReadConfiguration(filepath string, cfg interface{}) error {
@@ -91,6 +94,17 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 func (c *ClassicalApplication) StartServers() error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	c.Logger.Println("start tracing endpoint")
+	close, err := tracing.Start(c.config.Tracing)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		c.Logger.Println("stop tracing endpoint")
+		close()
+	}()
 
 	go func() {
 		c.Logger.Println("start monitoring server on ", c.config.Monitoring.Address)
