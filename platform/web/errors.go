@@ -19,6 +19,7 @@ func (e *Error) Error() string {
 
 const (
 	UnmanagedMessage  ErrorMessage = "[500000] Unmanaged error"
+	NotFoundMessage                = "[400000] Endpoint not found"
 	BadRequestMessage              = "[400001] Bad request"
 )
 
@@ -34,5 +35,12 @@ func NewErrBadRequestResponse(details ErrorDetails) error {
 		Code:    http.StatusBadRequest,
 		Message: BadRequestMessage,
 		Details: details,
+	}
+}
+
+func NewErrNotFoundResponse() error {
+	return &Error{
+		Code:    http.StatusNotFound,
+		Message: NotFoundMessage,
 	}
 }

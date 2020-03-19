@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -31,6 +32,13 @@ func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
 		middlewares: middlewares,
 	}
 
+	app.Router.NotFoundHandler = app.defineHandler(func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+		ctx, span := trace.StartSpan(ctx, "internal.platform.web.NotFoundHandler")
+		defer span.End()
+
+		return fmt.Errorf("%w", NewErrNotFoundResponse())
+	})
+
 	app.och = &ochttp.Handler{
 		Handler:     app.Router,
 		Propagation: &tracecontext.HTTPFormat{},
@@ -50,10 +58,14 @@ type Router struct {
 }
 
 func (a *Router) HandleFunc(method string, path string, handler Handler, middlewares ...Middleware) {
+	a.Router.HandleFunc(path, a.defineHandler(handler, middlewares...)).Methods(method)
+}
+
+func (a *Router) defineHandler(handler Handler, middlewares ...Middleware) http.HandlerFunc {
 	handler = wrapMiddleware(middlewares, handler)
 	handler = wrapMiddleware(a.middlewares, handler)
 
-	a.Router.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := trace.StartSpan(r.Context(), "internal.platform.web")
 		defer span.End()
 
@@ -65,12 +77,16 @@ func (a *Router) HandleFunc(method string, path string, handler Handler, middlew
 		ctx = context.WithValue(ctx, KeyValues, &v)
 
 		params := mux.Vars(r)
+		queryvalues := r.URL.Query()
+		for key := range queryvalues {
+			params[key] = queryvalues.Get(key)
+		}
 
 		if err := handler(ctx, w, r, params); err != nil {
 			a.SignalShutdown()
 			return
 		}
-	}).Methods(method)
+	}
 }
 
 func (a *Router) SignalShutdown() {

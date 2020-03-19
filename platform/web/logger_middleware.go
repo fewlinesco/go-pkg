@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -19,14 +20,19 @@ func LoggerMiddleware(log *log.Logger) Middleware {
 
 			err := before(ctx, w, r, params)
 
+			statuscode := v.StatusCode
 			var message string
 			if err != nil {
 				message = err.Error()
+				statuscode = 500
+				if e, ok := errors.Unwrap(err).(*Error); ok {
+					statuscode = e.Code
+				}
 			}
 
 			log.Printf(`method="%s" path="%s" traceid="%s" statuscode="%d" duration="%s" remoteaddr="%s" message="%s"`,
 				r.Method, r.URL.Path,
-				v.TraceID, v.StatusCode,
+				v.TraceID, statuscode,
 				time.Since(v.Now), r.RemoteAddr,
 				message,
 			)

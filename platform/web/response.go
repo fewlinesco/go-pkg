@@ -16,7 +16,7 @@ func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statu
 		return nil
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
 
 	return json.NewEncoder(w).Encode(data)
