@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -58,4 +59,8 @@ func IsUniqueConstraintError(err error, constraintName string) bool {
 	}
 
 	return e.Code == "23505" && e.Constraint == constraintName
+}
+
+func GetCurrentTimestamp() time.Time {
+	return time.Now().UTC().Truncate(time.Millisecond)
 }
