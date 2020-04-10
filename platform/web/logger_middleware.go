@@ -26,7 +26,7 @@ func LoggerMiddleware(log *log.Logger) Middleware {
 				message = err.Error()
 				statuscode = 500
 				if e, ok := errors.Unwrap(err).(*Error); ok {
-					statuscode = e.Code
+					statuscode = e.HTTPCode
 				}
 			}
 

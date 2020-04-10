@@ -30,5 +30,5 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 		webErr = err.(*Error)
 	}
 
-	return Respond(ctx, w, webErr, webErr.Code)
+	return Respond(ctx, w, webErr, webErr.HTTPCode)
 }
