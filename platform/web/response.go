@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
+	"github.com/fewlinesco/go-pkg/platform/monitoring"
 )
 
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
@@ -30,10 +30,7 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	if !ok {
 		v := ctx.Value(KeyValues).(*Values)
 
-		sentry.WithScope(func(scope *sentry.Scope) {
-			scope.SetTag("Trace-ID", v.TraceID)
-		})
-		sentry.CaptureException(err)
+		monitoring.CaptureException(err).AddTag("Trace-ID", v.TraceID).Log()
 
 		err = NewErrUnmanagedResponse(v.TraceID)
 		webErr = err.(*Error)
