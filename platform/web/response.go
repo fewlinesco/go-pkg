@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/getsentry/sentry-go"
 )
 
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
@@ -24,8 +26,15 @@ func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statu
 
 func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	webErr, ok := errors.Unwrap(err).(*Error)
+
 	if !ok {
 		v := ctx.Value(KeyValues).(*Values)
+
+		sentry.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("Trace-ID", v.TraceID)
+		})
+		sentry.CaptureException(err)
+
 		err = NewErrUnmanagedResponse(v.TraceID)
 		webErr = err.(*Error)
 	}
