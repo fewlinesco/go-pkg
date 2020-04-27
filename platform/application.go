@@ -118,7 +118,13 @@ func (c *ClassicalApplication) StartServers() error {
 	if err := monitoring.CreateNewErrorMonitoring(c.config.ErrorMonitoring); err != nil {
 		return err
 	}
-	defer sentry.Flush(2 * time.Second)
+
+	defer func() {
+		if err := recover(); err != nil {
+			sentry.CurrentHub().Recover(err)
+			sentry.Flush(2 * time.Second)
+		}
+	}()
 
 	api := web.NewServer(c.config.API, c.Router)
 	go func() {
