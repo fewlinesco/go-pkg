@@ -30,7 +30,7 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	if !ok {
 		v := ctx.Value(KeyValues).(*Values)
 
-		sentry.ConfigureScope(func(scope *sentry.Scope) {
+		sentry.WithScope(func(scope *sentry.Scope) {
 			scope.SetTag("Trace-ID", v.TraceID)
 		})
 		sentry.CaptureException(err)
