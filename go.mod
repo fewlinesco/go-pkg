@@ -3,6 +3,7 @@ module github.com/fewlinesco/go-pkg
 go 1.13
 
 require (
+	contrib.go.opencensus.io/exporter/jaeger v0.2.0
 	contrib.go.opencensus.io/exporter/zipkin v0.1.1
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
