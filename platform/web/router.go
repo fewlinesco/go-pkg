@@ -89,6 +89,18 @@ func (a *Router) defineHandler(handler Handler, middlewares ...Middleware) http.
 	}
 }
 
+func (a *Router) NewSubRouter(pathPrefix string, middleWares ...Middleware) *Router {
+	subRouter := *a
+
+	subRouter.Router = a.PathPrefix(pathPrefix).Subrouter()
+
+	for _, m := range middleWares {
+		subRouter.middlewares = append(subRouter.middlewares, m)
+	}
+
+	return &subRouter
+}
+
 func (a *Router) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
