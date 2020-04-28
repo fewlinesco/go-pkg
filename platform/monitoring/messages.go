@@ -1,51 +1,49 @@
 package monitoring
 
-import (
-	"github.com/getsentry/sentry-go"
-)
+import "github.com/getsentry/sentry-go"
 
-type Exception struct {
+type Message struct {
 	Level      *sentry.Level
 	Tags       map[string]string
 	Contexts   map[string]interface{}
 	Additional map[string]string
-	Err        error
+	Message    string
 }
 
-func CaptureException(exception error) Exception {
-	return Exception{
-		Err:        exception,
+func CaptureMessage(message string) Message {
+	return Message{
+		Message:    message,
 		Tags:       make(map[string]string, 0),
 		Contexts:   make(map[string]interface{}, 0),
 		Additional: make(map[string]string, 0),
 	}
 }
 
-func (exception Exception) SetLevel(level sentry.Level) Exception {
+func (exception Message) SetLevel(level sentry.Level) Message {
 	exception.Level = &level
 
 	return exception
 }
 
-func (exception Exception) AddTag(key string, value string) Exception {
+func (exception Message) AddTag(key string, value string) Message {
 	exception.Tags[key] = value
 
 	return exception
 }
 
-func (exception Exception) AddContext(key string, context interface{}) Exception {
+func (exception Message) AddContext(key string, context interface{}) Message {
 	exception.Contexts[key] = context
 
 	return exception
 }
 
-func (exception Exception) AddAdditional(key string, data string) Exception {
+func (exception Message) AddAdditional(key string, data string) Message {
 	exception.Additional[key] = data
 
 	return exception
 }
 
-func (exception Exception) Log() {
+func (exception Message) Log() {
 	sentry.WithScope(func(scope *sentry.Scope) {
 		for key, tag := range exception.Tags {
 			scope.SetTag(key, tag)
@@ -63,6 +61,6 @@ func (exception Exception) Log() {
 			scope.SetLevel(*exception.Level)
 		}
 
-		sentry.CaptureException(exception.Err)
+		sentry.CaptureMessage(exception.Message)
 	})
 }

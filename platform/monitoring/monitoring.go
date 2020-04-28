@@ -22,6 +22,19 @@ var DefaultConfig = Config{
 	SampleRate:       0.8,
 }
 
+
+type LogLevel struct {
+	Debug, Info, Warning, Error, Fatal sentry.Level
+}
+
+var LogLevels = LogLevel{
+	Debug:   sentry.LevelDebug,
+	Info:    sentry.LevelInfo,
+	Warning: sentry.LevelWarning,
+	Error:   sentry.LevelError,
+	Fatal:   sentry.LevelFatal,
+}
+
 func CreateNewErrorMonitoring(cfg Config) error {
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         cfg.DSN,
