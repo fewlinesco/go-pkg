@@ -15,10 +15,10 @@ func RecoveryMiddleware() Middleware {
 			ctx, span := trace.StartSpan(ctx, "internal.web.RecoveryMiddleware")
 
 			defer func() {
-				err := recover()
-				if err != nil {
+				if err := recover(); err != nil {
 					v := ctx.Value(KeyValues).(*Values)
 
+					sentry.CurrentHub().Recover(err)
 					sentry.Flush(2 * time.Second)
 
 					_ = Respond(ctx, w, NewErrUnmanagedResponse(v.TraceID), http.StatusInternalServerError)

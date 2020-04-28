@@ -26,10 +26,8 @@ func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statu
 
 func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	webErr, ok := errors.Unwrap(err).(*Error)
-
 	if !ok {
 		v := ctx.Value(KeyValues).(*Values)
-
 		err = NewErrUnmanagedResponse(v.TraceID)
 		webErr = err.(*Error)
 
