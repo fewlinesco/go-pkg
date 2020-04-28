@@ -19,6 +19,7 @@ func wrapMiddleware(middlewares []Middleware, handler Handler) Handler {
 
 func DefaultMiddlewares(logger *log.Logger) []Middleware {
 	return []Middleware{
+		RecoveryMiddleware(),
 		ErrorsMiddleware(),
 		LoggerMiddleware(logger),
 	}
