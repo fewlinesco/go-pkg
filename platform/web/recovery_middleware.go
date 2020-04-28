@@ -20,8 +20,6 @@ func RecoveryMiddleware() Middleware {
 					v := ctx.Value(KeyValues).(*Values)
 
 					sentry.WithScope(func(scope *sentry.Scope) {
-						scope.SetTag("Trace-ID",  v.TraceID)
-
 						sentry.CurrentHub().Recover(err)
 					})
 					sentry.Flush(2 * time.Second)

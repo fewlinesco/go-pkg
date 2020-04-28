@@ -50,3 +50,15 @@ func CreateNewErrorMonitoring(cfg Config) error {
 
 	return nil
 }
+
+func AddTagToScope(key string, tag string) {
+	sentry.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetTag(key, tag)
+	})
+}
+
+func AddContextToScope(key string, context interface{}) {
+	sentry.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetContext(key, context)
+	})
+}
