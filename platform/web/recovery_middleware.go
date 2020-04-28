@@ -19,9 +19,6 @@ func RecoveryMiddleware() Middleware {
 				if err != nil {
 					v := ctx.Value(KeyValues).(*Values)
 
-					sentry.WithScope(func(scope *sentry.Scope) {
-						sentry.CurrentHub().Recover(err)
-					})
 					sentry.Flush(2 * time.Second)
 
 					_ = Respond(ctx, w, NewErrUnmanagedResponse(v.TraceID), http.StatusInternalServerError)
