@@ -30,10 +30,10 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	if !ok {
 		v := ctx.Value(KeyValues).(*Values)
 
-		monitoring.CaptureException(err).AddTag("Trace-ID", v.TraceID).Log()
-
 		err = NewErrUnmanagedResponse(v.TraceID)
 		webErr = err.(*Error)
+
+		monitoring.CaptureException(err).Log()
 	}
 
 	return Respond(ctx, w, webErr, webErr.HTTPCode)
