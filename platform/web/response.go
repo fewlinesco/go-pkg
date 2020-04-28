@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/fewlinesco/go-pkg/platform/monitoring"
 )
 
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
@@ -28,6 +30,8 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 		v := ctx.Value(KeyValues).(*Values)
 		err = NewErrUnmanagedResponse(v.TraceID)
 		webErr = err.(*Error)
+
+		monitoring.CaptureException(err).Log()
 	}
 
 	return Respond(ctx, w, webErr, webErr.HTTPCode)

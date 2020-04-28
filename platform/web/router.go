@@ -13,6 +13,8 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
+
+	"github.com/fewlinesco/go-pkg/platform/monitoring"
 )
 
 type ctxKey int
@@ -75,6 +77,8 @@ func (a *Router) defineHandler(handler Handler, middlewares ...Middleware) http.
 		}
 
 		ctx = context.WithValue(ctx, KeyValues, &v)
+
+		monitoring.AddTagToScope("Trace-ID", v.TraceID)
 
 		params := mux.Vars(r)
 		queryvalues := r.URL.Query()

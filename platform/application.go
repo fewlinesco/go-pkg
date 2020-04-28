@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/GuiaBolso/darwin"
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/logging"
+	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/fewlinesco/go-pkg/platform/tracing"
 	"github.com/fewlinesco/go-pkg/platform/web"
 )
@@ -24,6 +26,7 @@ type ClassicalApplicationConfig struct {
 	Database   database.Config  `json:"database"`
 	Monitoring web.ServerConfig `json:"monitoring"`
 	Tracing    tracing.Config   `json:"tracing"`
+	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
 }
 
 type ClassicalApplication struct {
@@ -39,6 +42,7 @@ var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
 	Monitoring: web.DefaultMonitoringConfig,
 	Database:   database.DefaultConfig,
 	Tracing:    tracing.DefaultConfig,
+	ErrorMonitoring: monitoring.DefaultConfig,
 }
 
 func ReadConfiguration(filepath string, cfg interface{}) error {
@@ -107,6 +111,18 @@ func (c *ClassicalApplication) StartServers() error {
 	go func() {
 		c.Logger.Println("start monitoring server on ", c.config.Monitoring.Address)
 		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring).ListenAndServe()
+	}()
+
+	if err := monitoring.CreateNewErrorMonitoring(c.config.ErrorMonitoring); err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			sentry.CurrentHub().Recover(err)
+		}
+
+		sentry.Flush(time.Duration(c.config.API.ShutdownTimeout) * time.Second)
 	}()
 
 	api := web.NewServer(c.config.API, c.Router)
