@@ -122,8 +122,9 @@ func (c *ClassicalApplication) StartServers() error {
 	defer func() {
 		if err := recover(); err != nil {
 			sentry.CurrentHub().Recover(err)
-			sentry.Flush(2 * time.Second)
 		}
+
+		sentry.Flush(time.Duration(c.config.API.ShutdownTimeout) * time.Second)
 	}()
 
 	api := web.NewServer(c.config.API, c.Router)
