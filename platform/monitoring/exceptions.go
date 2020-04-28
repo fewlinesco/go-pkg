@@ -1,6 +1,8 @@
 package monitoring
 
-import "github.com/getsentry/sentry-go"
+import (
+	"github.com/getsentry/sentry-go"
+)
 
 type LogLevel struct {
 	Debug, Info, Warning, Error, Fatal sentry.Level
@@ -57,10 +59,11 @@ func (exception Exception) Log() {
 			scope.SetContext(contextName, context)
 		}
 
-		if &exception.Level != nil {
+		if exception.Level != nil {
 			scope.SetLevel(*exception.Level)
 		}
+
+		sentry.CaptureException(exception.Err)
 	})
 
-	sentry.CaptureException(exception.Err)
 }
