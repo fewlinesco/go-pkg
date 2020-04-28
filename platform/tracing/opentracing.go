@@ -34,7 +34,7 @@ func Start(cfg Config) error {
 
 	trace.RegisterExporter(exporter)
 	trace.ApplyConfig(trace.Config{
-		DefaultSampler: trace.ProbabilitySampler(1),
+		DefaultSampler: trace.ProbabilitySampler(cfg.Probability),
 	})
 
 	return nil
