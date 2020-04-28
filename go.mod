@@ -3,7 +3,7 @@ module github.com/fewlinesco/go-pkg
 go 1.13
 
 require (
-	contrib.go.opencensus.io/exporter/zipkin v0.1.1
+	contrib.go.opencensus.io/exporter/jaeger v0.2.0
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/cloudevents/sdk-go/v2 v2.0.0-preview6
@@ -17,7 +17,6 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lib/pq v1.3.0
-	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opencensus.io v0.22.3
 	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6 // indirect

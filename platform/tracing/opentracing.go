@@ -1,11 +1,7 @@
 package tracing
 
 import (
-	"fmt"
-
-	"contrib.go.opencensus.io/exporter/zipkin"
-	openzipkin "github.com/openzipkin/zipkin-go"
-	zipkinHTTP "github.com/openzipkin/zipkin-go/reporter/http"
+	"contrib.go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/trace"
 )
 
@@ -23,19 +19,23 @@ var DefaultConfig = Config{
 	Probability:   0.05,
 }
 
-func Start(cfg Config) (func(), error) {
-	localEndpoint, err := openzipkin.NewEndpoint(cfg.ServiceName, cfg.LocalEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("can't bind tracing to local endpoint: %w", err)
-	}
+func Start(cfg Config) error {
+	exporter, err := jaeger.NewExporter(jaeger.Options{
+		CollectorEndpoint: cfg.ReporterURI,
+		AgentEndpoint:     cfg.LocalEndpoint,
+		Process: jaeger.Process{
+			ServiceName: cfg.ServiceName,
+		},
+	})
 
-	reporter := zipkinHTTP.NewReporter(cfg.ReporterURI)
-	exporter := zipkin.NewExporter(reporter, localEndpoint)
+	if err != nil {
+		return err
+	}
 
 	trace.RegisterExporter(exporter)
 	trace.ApplyConfig(trace.Config{
 		DefaultSampler: trace.ProbabilitySampler(cfg.Probability),
 	})
 
-	return func() { reporter.Close() }, nil
+	return nil
 }
