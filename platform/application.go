@@ -96,14 +96,12 @@ func (c *ClassicalApplication) StartServers() error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	c.Logger.Println("start tracing endpoint")
-	close, err := tracing.Start(c.config.Tracing)
-	if err != nil {
+	if err := tracing.Start(c.config.Tracing); err != nil {
 		return err
 	}
 
 	defer func() {
 		c.Logger.Println("stop tracing endpoint")
-		close()
 	}()
 
 	go func() {
