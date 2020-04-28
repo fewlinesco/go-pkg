@@ -6,7 +6,6 @@ type Message struct {
 	Level      *sentry.Level
 	Tags       map[string]string
 	Contexts   map[string]interface{}
-	Additional map[string]string
 	Message    string
 }
 
@@ -15,7 +14,6 @@ func CaptureMessage(message string) Message {
 		Message:    message,
 		Tags:       make(map[string]string, 0),
 		Contexts:   make(map[string]interface{}, 0),
-		Additional: make(map[string]string, 0),
 	}
 }
 
@@ -37,12 +35,6 @@ func (exception Message) AddContext(key string, context interface{}) Message {
 	return exception
 }
 
-func (exception Message) AddAdditional(key string, data string) Message {
-	exception.Additional[key] = data
-
-	return exception
-}
-
 func (exception Message) Log() {
 	sentry.WithScope(func(scope *sentry.Scope) {
 		for key, tag := range exception.Tags {
@@ -51,10 +43,6 @@ func (exception Message) Log() {
 
 		for key, context := range exception.Contexts {
 			scope.SetContext(key, context)
-		}
-
-		for key, data := range exception.Additional {
-			scope.SetExtra(key, data)
 		}
 
 		if exception.Level != nil {

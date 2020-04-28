@@ -8,7 +8,6 @@ type Exception struct {
 	Level      *sentry.Level
 	Tags       map[string]string
 	Contexts   map[string]interface{}
-	Additional map[string]string
 	Err        error
 }
 
@@ -17,7 +16,6 @@ func CaptureException(exception error) Exception {
 		Err:        exception,
 		Tags:       make(map[string]string, 0),
 		Contexts:   make(map[string]interface{}, 0),
-		Additional: make(map[string]string, 0),
 	}
 }
 
@@ -39,12 +37,6 @@ func (exception Exception) AddContext(key string, context interface{}) Exception
 	return exception
 }
 
-func (exception Exception) AddAdditional(key string, data string) Exception {
-	exception.Additional[key] = data
-
-	return exception
-}
-
 func (exception Exception) Log() {
 	sentry.WithScope(func(scope *sentry.Scope) {
 		for key, tag := range exception.Tags {
@@ -53,10 +45,6 @@ func (exception Exception) Log() {
 
 		for key, context := range exception.Contexts {
 			scope.SetContext(key, context)
-		}
-
-		for key, data := range exception.Additional {
-			scope.SetExtra(key, data)
 		}
 
 		if exception.Level != nil {
