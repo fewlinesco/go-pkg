@@ -5,6 +5,8 @@ import (
 	"net/http"
 	_ "net/http/pprof" // Register the pprof handlers
 	"time"
+
+	"github.com/sqreen/go-agent/sdk/middleware/sqhttp"
 )
 
 type ServerConfig struct {
@@ -31,7 +33,7 @@ var DefaultMonitoringConfig = ServerConfig{
 func NewServer(config ServerConfig, router http.Handler) *http.Server {
 	server := http.Server{
 		Addr:         config.Address,
-		Handler:      router,
+		Handler:      sqhttp.Middleware(router),
 		ReadTimeout:  time.Duration(config.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(config.WriteTimeout) * time.Second,
 	}
