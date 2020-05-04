@@ -22,26 +22,27 @@ import (
 )
 
 type ClassicalApplicationConfig struct {
-	API        web.ServerConfig `json:"api"`
-	Database   database.Config  `json:"database"`
-	Monitoring web.ServerConfig `json:"monitoring"`
-	Tracing    tracing.Config   `json:"tracing"`
+	API             web.ServerConfig  `json:"api"`
+	Database        database.Config   `json:"database"`
+	Monitoring      web.ServerConfig  `json:"monitoring"`
+	Tracing         tracing.Config    `json:"tracing"`
 	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
 }
 
 type ClassicalApplication struct {
-	Database     *sqlx.DB
-	Logger       *log.Logger
-	Router       *web.Router
-	config       ClassicalApplicationConfig
-	serverErrors chan error
+	Database       *sqlx.DB
+	HealthzHandler web.Handler
+	Logger         *log.Logger
+	Router         *web.Router
+	config         ClassicalApplicationConfig
+	serverErrors   chan error
 }
 
 var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
-	API:        web.DefaultServerConfig,
-	Monitoring: web.DefaultMonitoringConfig,
-	Database:   database.DefaultConfig,
-	Tracing:    tracing.DefaultConfig,
+	API:             web.DefaultServerConfig,
+	Monitoring:      web.DefaultMonitoringConfig,
+	Database:        database.DefaultConfig,
+	Tracing:         tracing.DefaultConfig,
 	ErrorMonitoring: monitoring.DefaultConfig,
 }
 
@@ -73,7 +74,7 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 	}, nil
 }
 
-func (c *ClassicalApplication) Start(arguments []string, router *web.Router, migrations []darwin.Migration) error {
+func (c *ClassicalApplication) Start(arguments []string, router *web.Router, healthzHandler web.Handler, migrations []darwin.Migration) error {
 	var command string
 
 	if len(arguments) > 0 {
@@ -87,7 +88,7 @@ func (c *ClassicalApplication) Start(arguments []string, router *web.Router, mig
 	default:
 		c.Router = router
 
-		return c.StartServers()
+		return c.StartServers(healthzHandler)
 	}
 }
 
@@ -95,7 +96,7 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 	return database.Migrate(c.Database, migrations)
 }
 
-func (c *ClassicalApplication) StartServers() error {
+func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
@@ -110,7 +111,7 @@ func (c *ClassicalApplication) StartServers() error {
 
 	go func() {
 		c.Logger.Println("start monitoring server on ", c.config.Monitoring.Address)
-		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring).ListenAndServe()
+		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring, c.Logger, healthzHandler).ListenAndServe()
 	}()
 
 	if err := monitoring.CreateNewErrorMonitoring(c.config.ErrorMonitoring); err != nil {
