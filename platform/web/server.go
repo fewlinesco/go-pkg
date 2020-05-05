@@ -1,7 +1,9 @@
 package web
 
 import (
+	"context"
 	_ "expvar" // Register the expvar handlers
+	"log"
 	"net/http"
 	_ "net/http/pprof" // Register the pprof handlers
 	"time"
@@ -39,6 +41,15 @@ func NewServer(config ServerConfig, router http.Handler) *http.Server {
 	return &server
 }
 
-func NewMonitoringServer(config ServerConfig) *http.Server {
-	return NewServer(config, http.DefaultServeMux)
+func NewMonitoringServer(config ServerConfig, logger *log.Logger, healthzHandler Handler) *http.Server {
+	router := NewRouter(logger, DefaultMiddlewares(logger))
+
+	router.HandleFunc("GET", "/ping", pingHandler)
+	router.HandleFunc("GET", "/healthz", healthzHandler)
+	return NewServer(config, router)
+}
+
+func pingHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+	w.WriteHeader(http.StatusOK)
+	return nil
 }
