@@ -44,12 +44,12 @@ func NewServer(config ServerConfig, router http.Handler) *http.Server {
 func NewMonitoringServer(config ServerConfig, logger *log.Logger, healthzHandler Handler) *http.Server {
 	router := NewRouter(logger, DefaultMiddlewares(logger))
 
-	router.HandleFunc("GET", "/ping", handlePing)
+	router.HandleFunc("GET", "/ping", pingHandler)
 	router.HandleFunc("GET", "/healthz", healthzHandler)
 	return NewServer(config, router)
 }
 
-func handlePing(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func pingHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
 	w.WriteHeader(http.StatusOK)
 	return nil
 }
