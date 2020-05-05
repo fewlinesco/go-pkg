@@ -3,6 +3,8 @@ package web
 import (
 	"context"
 	"net/http"
+
+	"go.opencensus.io/trace"
 )
 
 type HealthzState string
@@ -13,7 +15,7 @@ const (
 	HealthzStateUnhealthy HealthzState = "unhealthy"
 )
 
-type HealthzChecker func() HealthzStatus
+type HealthzChecker func(context.Context) HealthzStatus
 
 type HealthzStatus struct {
 	Type        string            `json:"type"`
@@ -30,12 +32,15 @@ type HealthzResponse struct {
 
 func HealthzHandler(serviceCheckers []HealthzChecker) Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+		ctx, span := trace.StartSpan(ctx, "platform.web.HealthzHandler")
+		defer span.End()
+
 		var response HealthzResponse
 
 		state := HealthzStateHealthy
 
 		for _, serviceChecker := range serviceCheckers {
-			service := serviceChecker()
+			service := serviceChecker(ctx)
 			if state != HealthzStateUnhealthy {
 				switch service.State {
 				case HealthzStateUnhealthy:
