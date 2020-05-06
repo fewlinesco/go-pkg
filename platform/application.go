@@ -12,10 +12,10 @@ import (
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/getsentry/sentry-go"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/logging"
+	"github.com/fewlinesco/go-pkg/platform/metrics"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/fewlinesco/go-pkg/platform/tracing"
 	"github.com/fewlinesco/go-pkg/platform/web"
@@ -30,7 +30,7 @@ type ClassicalApplicationConfig struct {
 }
 
 type ClassicalApplication struct {
-	Database       *sqlx.DB
+	Database       *database.DB
 	HealthzHandler web.Handler
 	Logger         *log.Logger
 	Router         *web.Router
@@ -44,6 +44,15 @@ var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
 	Database:        database.DefaultConfig,
 	Tracing:         tracing.DefaultConfig,
 	ErrorMonitoring: monitoring.DefaultConfig,
+}
+
+func DefaultClassicalApplicationMetricViews() []*metrics.View {
+	var views []*metrics.View
+
+	views = append(views, database.MetricViews...)
+	views = append(views, web.MetricViews...)
+
+	return views
 }
 
 func ReadConfiguration(filepath string, cfg interface{}) error {
@@ -74,12 +83,16 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 	}, nil
 }
 
-func (c *ClassicalApplication) Start(arguments []string, router *web.Router, healthzHandler web.Handler, migrations []darwin.Migration) error {
+func (c *ClassicalApplication) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, healthzHandler web.Handler, migrations []darwin.Migration) error {
 	var command string
 
 	if len(arguments) > 0 {
 		command = arguments[0]
 		arguments = arguments[1:]
+	}
+
+	if err := metrics.RegisterViews(metricViews...); err != nil {
+		return err
 	}
 
 	switch command {
@@ -88,7 +101,7 @@ func (c *ClassicalApplication) Start(arguments []string, router *web.Router, hea
 	default:
 		c.Router = router
 
-		return c.StartServers(healthzHandler)
+		return c.StartServers(name, healthzHandler)
 	}
 }
 
@@ -96,7 +109,7 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 	return database.Migrate(c.Database, migrations)
 }
 
-func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
+func (c *ClassicalApplication) StartServers(name string, healthzHandler web.Handler) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
@@ -109,9 +122,14 @@ func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
 		c.Logger.Println("stop tracing endpoint")
 	}()
 
+	metricsHandler, err := metrics.CreateHandler(name)
+	if err != nil {
+		return fmt.Errorf("can't create metrics handler: %v", err)
+	}
+
 	go func() {
 		c.Logger.Println("start monitoring server on ", c.config.Monitoring.Address)
-		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring, c.Logger, healthzHandler).ListenAndServe()
+		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring, c.Logger, web.WrapNetHTTPHandler("metrics", metricsHandler), healthzHandler).ListenAndServe()
 	}()
 
 	if err := monitoring.CreateNewErrorMonitoring(c.config.ErrorMonitoring); err != nil {
