@@ -74,7 +74,7 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 	}, nil
 }
 
-func (c *ClassicalApplication) Start(arguments []string, router *web.Router, healthzHandler web.Handler, migrations []darwin.Migration) error {
+func (c *ClassicalApplication) Start(arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
 	var command string
 
 	if len(arguments) > 0 {
@@ -88,7 +88,7 @@ func (c *ClassicalApplication) Start(arguments []string, router *web.Router, hea
 	default:
 		c.Router = router
 
-		return c.StartServers(healthzHandler)
+		return c.StartServers(serviceCheckers)
 	}
 }
 
@@ -96,7 +96,7 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 	return database.Migrate(c.Database, migrations)
 }
 
-func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
+func (c *ClassicalApplication) StartServers(serviceCheckers []web.HealthzChecker) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
@@ -111,7 +111,7 @@ func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
 
 	go func() {
 		c.Logger.Println("start monitoring server on ", c.config.Monitoring.Address)
-		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring, c.Logger, healthzHandler).ListenAndServe()
+		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring, c.Logger, serviceCheckers).ListenAndServe()
 	}()
 
 	if err := monitoring.CreateNewErrorMonitoring(c.config.ErrorMonitoring); err != nil {
