@@ -21,29 +21,42 @@ import (
 	"github.com/fewlinesco/go-pkg/platform/web"
 )
 
-type ClassicalApplicationConfig struct {
+type ApplicationConfig struct {
 	API             web.ServerConfig  `json:"api"`
-	Database        database.Config   `json:"database"`
 	Monitoring      web.ServerConfig  `json:"monitoring"`
 	Tracing         tracing.Config    `json:"tracing"`
 	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
 }
 
-type ClassicalApplication struct {
-	Database       *sqlx.DB
+type ClassicalApplicationConfig struct {
+	ApplicationConfig
+	Database database.Config `json:"database"`
+}
+
+type Application struct {
 	HealthzHandler web.Handler
 	Logger         *log.Logger
 	Router         *web.Router
-	config         ClassicalApplicationConfig
+	config         ApplicationConfig
 	serverErrors   chan error
 }
 
-var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
+type ClassicalApplication struct {
+	Application
+	config   ClassicalApplicationConfig
+	Database *sqlx.DB
+}
+
+var DefaultApplicationConfig = ApplicationConfig{
 	API:             web.DefaultServerConfig,
 	Monitoring:      web.DefaultMonitoringConfig,
-	Database:        database.DefaultConfig,
 	Tracing:         tracing.DefaultConfig,
 	ErrorMonitoring: monitoring.DefaultConfig,
+}
+
+var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
+	ApplicationConfig: DefaultApplicationConfig,
+	Database:          database.DefaultConfig,
 }
 
 func ReadConfiguration(filepath string, cfg interface{}) error {
@@ -67,14 +80,31 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 
 	return &ClassicalApplication{
 		Database: db,
-		Logger:   logging.NewDefaultLogger(),
+		config:   config,
+		Application: Application{
+			config:       config.ApplicationConfig,
+			Logger:       logging.NewDefaultLogger(),
+			serverErrors: make(chan error, 2),
+		},
+	}, nil
+}
+
+func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
+	return &Application{
+
+		Logger: logging.NewDefaultLogger(),
 
 		config:       config,
 		serverErrors: make(chan error, 2),
 	}, nil
 }
 
-func (c *ClassicalApplication) Start(arguments []string, router *web.Router, healthzHandler web.Handler, migrations []darwin.Migration) error {
+func (a *Application) Start(arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker) error {
+	a.Router = router
+
+	return a.StartServers(serviceCheckers)
+}
+func (c *ClassicalApplication) Start(arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
 	var command string
 
 	if len(arguments) > 0 {
@@ -86,9 +116,7 @@ func (c *ClassicalApplication) Start(arguments []string, router *web.Router, hea
 	case "migrate":
 		return c.StartMigrations(migrations)
 	default:
-		c.Router = router
-
-		return c.StartServers(healthzHandler)
+		return c.Application.Start(arguments, router, serviceCheckers)
 	}
 }
 
@@ -96,25 +124,25 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 	return database.Migrate(c.Database, migrations)
 }
 
-func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
+func (a *Application) StartServers(serviceCheckers []web.HealthzChecker) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	c.Logger.Println("start tracing endpoint")
-	if err := tracing.Start(c.config.Tracing); err != nil {
+	a.Logger.Println("start tracing endpoint")
+	if err := tracing.Start(a.config.Tracing); err != nil {
 		return err
 	}
 
 	defer func() {
-		c.Logger.Println("stop tracing endpoint")
+		a.Logger.Println("stop tracing endpoint")
 	}()
 
 	go func() {
-		c.Logger.Println("start monitoring server on ", c.config.Monitoring.Address)
-		c.serverErrors <- web.NewMonitoringServer(c.config.Monitoring, c.Logger, healthzHandler).ListenAndServe()
+		a.Logger.Println("start monitoring server on ", a.config.Monitoring.Address)
+		a.serverErrors <- web.NewMonitoringServer(a.config.Monitoring, a.Logger, serviceCheckers).ListenAndServe()
 	}()
 
-	if err := monitoring.CreateNewErrorMonitoring(c.config.ErrorMonitoring); err != nil {
+	if err := monitoring.CreateNewErrorMonitoring(a.config.ErrorMonitoring); err != nil {
 		return err
 	}
 
@@ -123,26 +151,26 @@ func (c *ClassicalApplication) StartServers(healthzHandler web.Handler) error {
 			sentry.CurrentHub().Recover(err)
 		}
 
-		sentry.Flush(time.Duration(c.config.API.ShutdownTimeout) * time.Second)
+		sentry.Flush(time.Duration(a.config.API.ShutdownTimeout) * time.Second)
 	}()
 
-	api := web.NewServer(c.config.API, c.Router)
+	api := web.NewServer(a.config.API, a.Router)
 	go func() {
-		c.Logger.Println("start api server on ", c.config.API.Address)
-		c.serverErrors <- api.ListenAndServe()
+		a.Logger.Println("start api server on ", a.config.API.Address)
+		a.serverErrors <- api.ListenAndServe()
 	}()
 
 	select {
-	case err := <-c.serverErrors:
+	case err := <-a.serverErrors:
 		return fmt.Errorf("server failed: %v", err)
 
 	case sig := <-shutdown:
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.config.API.ShutdownTimeout)*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(a.config.API.ShutdownTimeout)*time.Second)
 		defer cancel()
 
 		err := api.Shutdown(ctx)
 		if err != nil {
-			c.Logger.Printf("graceful shutdown did not complete in %v : %v", c.config.API.ShutdownTimeout, err)
+			a.Logger.Printf("graceful shutdown did not complete in %v : %v", a.config.API.ShutdownTimeout, err)
 			err = api.Close()
 		}
 
