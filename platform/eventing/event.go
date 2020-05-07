@@ -25,7 +25,7 @@ const (
 	EventStatusQueued    eventStatus = "queued"
 	EventStatusScheduled             = "scheduled"
 	EventStatusFailed                = "failed"
-	EventStatusSent                  = "sent"
+	EventStatusProcessed             = "processed"
 )
 
 // Event stores all the information required in order to dispatch an event to the Broker
@@ -146,7 +146,7 @@ func ReenqueEvent(ctx context.Context, db *sqlx.DB, ev Event) error {
 
 // MarkEventAsSent It returns the new updated event
 func MarkEventAsSent(ctx context.Context, db *sqlx.DB, ev Event) (Event, error) {
-	ev.Status = EventStatusSent
+	ev.Status = EventStatusProcessed
 	now := time.Now()
 	ev.FinishedAt = &now
 
