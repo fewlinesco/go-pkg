@@ -43,7 +43,7 @@ type Event struct {
 	Error        *string        `db:"error"`
 }
 
-// CreateEventToPublish creates a new events that we'll store inside the published_events table.
+// CreateEventToPublish creates a new events that we'll store inside the events_to_publish table.
 // subject: the resource bound to the event (e.g current user id, etc...)
 // eventtype: is the name of the event (e.g `application.created`)
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
@@ -65,7 +65,7 @@ func CreateEventToPublish(ctx context.Context, tx *sqlx.Tx, subject string, even
 	}
 
 	_, err = tx.NamedExecContext(ctx, `
-		INSERT INTO published_events
+		INSERT INTO events_to_publish
 		(id, status, subject, event_type, dataschema, data, dispatched_at)
 		VALUES
 		(:id, :status, :subject, :event_type, :dataschema, :data, :dispatched_at)
@@ -78,7 +78,7 @@ func CreateEventToPublish(ctx context.Context, tx *sqlx.Tx, subject string, even
 	return ev, nil
 }
 
-// CreateEventToConsume creates a new events that we'll store inside the consumed_events table.
+// CreateEventToConsume creates a new events that we'll store inside the events_to_consume table.
 // subject: the resource bound to the event (e.g current user id, etc...)
 // eventtype: is the name of the event (e.g `application.created`)
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
@@ -100,7 +100,7 @@ func CreateEventToConsume(ctx context.Context, tx *sqlx.Tx, subject string, even
 	}
 
 	_, err = tx.NamedExecContext(ctx, `
-		INSERT INTO consumed_events
+		INSERT INTO events_to_consume
 		(id, status, subject, event_type, dataschema, data, dispatched_at)
 		VALUES
 		(:id, :status, :subject, :event_type, :dataschema, :data, :dispatched_at)
@@ -119,13 +119,13 @@ func ScheduleNextEventsToConsume(ctx context.Context, db *sqlx.DB, workerName st
 	var evs []Event
 
 	err := db.SelectContext(ctx, &evs, `
-		UPDATE consumed_events
+		UPDATE events_to_consume
 		SET status = $1,
 			scheduled_at = NOW(),
 			worker = $2
 		WHERE id IN (
-			SELECT events.id
-			FROM events
+			SELECT events_to_consume.id
+			FROM events_to_consume
 			WHERE status = 'queued'
 			ORDER BY dispatched_at ASC
 			FOR UPDATE SKIP LOCKED
@@ -151,13 +151,13 @@ func ScheduleNextEventsToPublish(ctx context.Context, db *sqlx.DB, workerName st
 	var evs []Event
 
 	err := db.SelectContext(ctx, &evs, `
-		UPDATE published_events
+		UPDATE events_to_publish
 		SET status = $1,
 			scheduled_at = NOW(),
 			worker = $2
 		WHERE id IN (
-			SELECT events.id
-			FROM events
+			SELECT events_to_publish.id
+			FROM events_to_publish
 			WHERE status = 'queued'
 			ORDER BY dispatched_at ASC
 			FOR UPDATE SKIP LOCKED
@@ -184,7 +184,7 @@ func MarkEventToConsumeAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reas
 	now := time.Now()
 	ev.FinishedAt = &now
 
-	if _, err := db.NamedExecContext(ctx, "UPDATE consumed_events SET status = :status, finished_at = :finished_at, error = :error WHERE id = :id", ev); err != nil {
+	if _, err := db.NamedExecContext(ctx, "UPDATE events_to_consume SET status = :status, finished_at = :finished_at, error = :error WHERE id = :id", ev); err != nil {
 		return ev, fmt.Errorf("can't update: %v", err)
 	}
 
@@ -198,7 +198,7 @@ func MarkEventToPublishAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reas
 	now := time.Now()
 	ev.FinishedAt = &now
 
-	if _, err := db.NamedExecContext(ctx, "UPDATE published_events SET status = :status, finished_at = :finished_at, error = :error WHERE id = :id", ev); err != nil {
+	if _, err := db.NamedExecContext(ctx, "UPDATE events_to_publish SET status = :status, finished_at = :finished_at, error = :error WHERE id = :id", ev); err != nil {
 		return ev, fmt.Errorf("can't update: %v", err)
 	}
 
@@ -207,7 +207,7 @@ func MarkEventToPublishAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reas
 
 // ReenqueWorkerEventsToPublish changes all event status to make them ready to be picked-up again
 func ReenqueWorkerEventsToPublish(ctx context.Context, db *sqlx.DB, workerName string) error {
-	if _, err := db.ExecContext(ctx, "UPDATE published_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
+	if _, err := db.ExecContext(ctx, "UPDATE events_to_publish SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
 		return fmt.Errorf("can't re-enqueue worker's published events: %v", err)
 	}
 
@@ -216,7 +216,7 @@ func ReenqueWorkerEventsToPublish(ctx context.Context, db *sqlx.DB, workerName s
 
 // ReenqueWorkerEventsToConsume changes all event status to make them ready to be picked-up again
 func ReenqueWorkerEventsToConsume(ctx context.Context, db *sqlx.DB, workerName string) error {
-	if _, err := db.ExecContext(ctx, "UPDATE consumed_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
+	if _, err := db.ExecContext(ctx, "UPDATE events_to_consume SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
 		return fmt.Errorf("can't re-enqueue worker's published events: %v", err)
 	}
 
@@ -227,7 +227,7 @@ func ReenqueWorkerEventsToConsume(ctx context.Context, db *sqlx.DB, workerName s
 func ReenqueEventToPublish(ctx context.Context, db *sqlx.DB, ev Event) error {
 	ev.Status = EventStatusQueued
 
-	if _, err := db.NamedExecContext(ctx, "UPDATE published_events SET status = :status WHERE id = :id", ev); err != nil {
+	if _, err := db.NamedExecContext(ctx, "UPDATE events_to_publish SET status = :status WHERE id = :id", ev); err != nil {
 		return fmt.Errorf("can't update: %v", err)
 	}
 
@@ -238,7 +238,7 @@ func ReenqueEventToPublish(ctx context.Context, db *sqlx.DB, ev Event) error {
 func ReenqueEventToConsume(ctx context.Context, db *sqlx.DB, ev Event) error {
 	ev.Status = EventStatusQueued
 
-	if _, err := db.NamedExecContext(ctx, "UPDATE consumed_events SET status = :status WHERE id = :id", ev); err != nil {
+	if _, err := db.NamedExecContext(ctx, "UPDATE events_to_consume SET status = :status WHERE id = :id", ev); err != nil {
 		return fmt.Errorf("can't update: %v", err)
 	}
 
@@ -251,7 +251,7 @@ func MarkPublishedEventAsProcessed(ctx context.Context, db *sqlx.DB, ev Event) (
 	now := time.Now()
 	ev.FinishedAt = &now
 
-	if _, err := db.NamedExecContext(ctx, "UPDATE published_events SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
+	if _, err := db.NamedExecContext(ctx, "UPDATE events_to_publish SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
 		return ev, fmt.Errorf("can't update: %v", err)
 	}
 
@@ -264,7 +264,7 @@ func MarkConsumedEventAsProcessed(ctx context.Context, db *sqlx.DB, ev Event) (E
 	now := time.Now()
 	ev.FinishedAt = &now
 
-	if _, err := db.NamedExecContext(ctx, "UPDATE consumed_events SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
+	if _, err := db.NamedExecContext(ctx, "UPDATE events_to_consume SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
 		return ev, fmt.Errorf("can't update: %v", err)
 	}
 
