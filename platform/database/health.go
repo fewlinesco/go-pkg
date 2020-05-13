@@ -22,7 +22,11 @@ func HealthCheck(db *sqlx.DB) web.HealthzChecker {
 
 		err := db.PingContext(ctx)
 		if err != nil {
-			service.Error = err.Error()
+			errorMessage := err.Error()
+
+			service.Error = errorMessage
+			span.AddAttributes(trace.StringAttribute("database-health-error", errorMessage))
+
 			service.State = web.HealthzStateUnhealthy
 		}
 
