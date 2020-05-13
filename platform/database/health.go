@@ -17,7 +17,7 @@ func HealthCheck(db *sqlx.DB) web.HealthzChecker {
 		service := web.HealthzStatus{
 			Type:        "Database",
 			Description: "Check the availability of the service's database",
-			State: web.HealthzStateHealthy,
+			State:       web.HealthzStateHealthy,
 		}
 
 		err := db.PingContext(ctx)
