@@ -57,7 +57,7 @@ func (s *SenderScheduler) Start() error {
 	ticker := time.NewTicker(s.PollingInterval)
 	done := make(chan error)
 
-	if err := ReenqueWorkerEventsToPublish(context.Background(), s.db, s.identifier); err != nil {
+	if err := ReenqueWorkerPublisherEvents(context.Background(), s.db, s.identifier); err != nil {
 		return err
 	}
 

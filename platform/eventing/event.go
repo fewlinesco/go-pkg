@@ -205,19 +205,19 @@ func MarkPublisherEventAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reas
 	return ev, nil
 }
 
-// ReenqueWorkerEventsToPublish changes all event status to make them ready to be picked-up again
-func ReenqueWorkerEventsToPublish(ctx context.Context, db *sqlx.DB, workerName string) error {
+// ReenqueWorkerPublisherEvents changes all event status to make them ready to be picked-up again
+func ReenqueWorkerPublisherEvents(ctx context.Context, db *sqlx.DB, workerName string) error {
 	if _, err := db.ExecContext(ctx, "UPDATE publisher_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
-		return fmt.Errorf("can't re-enqueue worker's published events: %v", err)
+		return fmt.Errorf("can't re-enqueue worker's publisher events: %v", err)
 	}
 
 	return nil
 }
 
-// ReenqueWorkerEventsToConsume changes all event status to make them ready to be picked-up again
-func ReenqueWorkerEventsToConsume(ctx context.Context, db *sqlx.DB, workerName string) error {
+// ReenqueWorkerConsumerEvents changes all event status to make them ready to be picked-up again
+func ReenqueWorkerConsumerEvents(ctx context.Context, db *sqlx.DB, workerName string) error {
 	if _, err := db.ExecContext(ctx, "UPDATE consumer_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
-		return fmt.Errorf("can't re-enqueue worker's published events: %v", err)
+		return fmt.Errorf("can't re-enqueue worker's consumer events: %v", err)
 	}
 
 	return nil
