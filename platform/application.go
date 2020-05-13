@@ -112,6 +112,9 @@ func (c *ClassicalApplication) Start(arguments []string, router *web.Router, ser
 		arguments = arguments[1:]
 	}
 
+	defaultServiceCheckers := []web.HealthzChecker{database.HealthCheck(c.Database)}
+	serviceCheckers = append(defaultServiceCheckers, serviceCheckers...)
+
 	switch command {
 	case "migrate":
 		return c.StartMigrations(migrations)
