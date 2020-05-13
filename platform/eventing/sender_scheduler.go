@@ -102,7 +102,7 @@ func (s *SenderScheduler) Start() error {
 						cloudevent.SetType(ev.EventType)
 						cloudevent.SetDataSchema(ev.DataSchema)
 						if err := cloudevent.SetData("application/json", ev.Data); err != nil {
-							if _, err := MarkEventToPublishAsFailed(ctx, s.db, ev, err.Error()); err != nil {
+							if _, err := MarkPublisherEventAsFailed(ctx, s.db, ev, err.Error()); err != nil {
 								log(ev.ID, fmt.Sprintf("can't mark event as failed: %v", err))
 								return
 							}
@@ -111,7 +111,7 @@ func (s *SenderScheduler) Start() error {
 						if err := s.cloudEventClient.Send(ctx, cloudevent); err != nil {
 							log(ev.ID, fmt.Sprintf("re-enqueue because can't send event to the broker: %v.", err))
 
-							if err := ReenqueEventToPublish(ctx, s.db, ev); err != nil {
+							if err := ReenquePublisherEvent(ctx, s.db, ev); err != nil {
 								log(ev.ID, fmt.Sprintf("can't re-enqueue event: %v", err))
 
 								return
