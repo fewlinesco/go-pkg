@@ -6,7 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
-	github.com/cloudevents/sdk-go/v2 v2.0.0-preview6
+	github.com/cloudevents/sdk-go/v2 v2.0.0-preview8
 	github.com/cznic/ql v1.2.0 // indirect
 	github.com/getsentry/sentry-go v0.6.0
 	github.com/go-playground/locales v0.13.0
