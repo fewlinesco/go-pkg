@@ -3,18 +3,20 @@ package eventing
 import (
 	"context"
 	"fmt"
+	"log"
 
-	cloudevents "github.com/cloudevents/sdk-go"
 	"github.com/cloudevents/sdk-go/v2/client"
+	"github.com/cloudevents/sdk-go/v2/event"
 )
 
 func ListenAndSave(client client.Client) {
-	fmt.Printf("ListenAndSave\n")
 	for {
-		client.StartReceiver(context.Background(), saveReceivedEvent)
+		if err := client.StartReceiver(context.Background(), saveReceivedEvent); err != nil {
+			log.Printf("failed to start nats receiver, %s", err.Error())
+		}
 	}
 }
 
-func saveReceivedEvent(event cloudevents.Event) {
+func saveReceivedEvent(ctx context.Context, event event.Event) {
 	fmt.Printf("saveReceivedEvent: %v\n", event)
 }

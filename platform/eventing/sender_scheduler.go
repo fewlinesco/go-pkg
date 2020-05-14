@@ -13,7 +13,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	cloudeventsv2 "github.com/cloudevents/sdk-go/v2"
-	cenats "github.com/cloudevents/sdk-go/v2/protocol/nats"
 )
 
 // SenderScheduler represents the datastructure in charge of dispatching events
@@ -68,30 +67,6 @@ func (s *SenderScheduler) Start() error {
 	if err := ReenqueWorkerPublisherEvents(context.Background(), s.db, s.identifier); err != nil {
 		return err
 	}
-
-	ctx := context.Background()
-
-	p, err := cenats.NewConsumer("localhost:4222", "local.connect.application", cenats.NatsOptions())
-	if err != nil {
-		log.Fatalf("failed to create nats protocol, %s", err.Error())
-	}
-
-	defer p.Close(ctx)
-
-	log.Println("Hello before the new client 👋")
-
-	c, err := cloudeventsv2.NewClient(p)
-	if err != nil {
-		log.Fatalf("failed to create client, %s", err.Error())
-	}
-
-	go func() {
-		for {
-			if err := c.StartReceiver(ctx, receive); err != nil {
-				log.Printf("failed to start nats receiver, %s", err.Error())
-			}
-		}
-	}()
 
 	go func() {
 		for {
