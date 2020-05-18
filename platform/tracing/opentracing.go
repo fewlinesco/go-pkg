@@ -14,7 +14,7 @@ type Config struct {
 
 var DefaultConfig = Config{
 	LocalEndpoint: "0.0.0.0:8080",
-	ReporterURI:   "http://localhost:9411/api/v2/spans",
+	ReporterURI:   "http://localhost:14268/api/traces",
 	ServiceName:   "service-name",
 	Probability:   0.05,
 }
