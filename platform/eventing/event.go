@@ -93,23 +93,18 @@ func CreatePublisherEvent(ctx context.Context, tx *sqlx.Tx, subject string, even
 // eventtype: is the name of the event (e.g `application.created`)
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
-func CreateConsumerEvent(ctx context.Context, tx *sqlx.Tx, subject string, eventtype string, dataschema string, data interface{}) (Event, error) {
-	rawdata, err := json.Marshal(data)
-	if err != nil {
-		return Event{}, fmt.Errorf("can't marshal event: %w", err)
-	}
-
+func CreateConsumerEvent(ctx context.Context, db *sqlx.DB, subject string, eventtype string, dataschema string, data []byte) (Event, error) {
 	ev := Event{
 		ID:           uuid.New().String(),
 		Status:       EventStatusQueued,
 		Subject:      subject,
 		DataSchema:   dataschema,
 		EventType:    eventtype,
-		Data:         types.JSONText(rawdata),
+		Data:         types.JSONText(data),
 		DispatchedAt: time.Now(),
 	}
 
-	_, err = tx.NamedExecContext(ctx, `
+	_, err := db.NamedExecContext(ctx, `
 		INSERT INTO consumer_events
 		(id, status, subject, event_type, dataschema, data, dispatched_at)
 		VALUES
