@@ -15,6 +15,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/fewlinesco/go-pkg/platform/database"
+	"github.com/fewlinesco/go-pkg/platform/eventing"
 	"github.com/fewlinesco/go-pkg/platform/logging"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/fewlinesco/go-pkg/platform/tracing"
@@ -26,6 +27,7 @@ type ApplicationConfig struct {
 	Monitoring      web.ServerConfig  `json:"monitoring"`
 	Tracing         tracing.Config    `json:"tracing"`
 	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
+	Eventing        eventing.Config   `json:"eventing_config"`
 }
 
 type ClassicalApplicationConfig struct {
@@ -52,6 +54,7 @@ var DefaultApplicationConfig = ApplicationConfig{
 	Monitoring:      web.DefaultMonitoringConfig,
 	Tracing:         tracing.DefaultConfig,
 	ErrorMonitoring: monitoring.DefaultConfig,
+	Eventing:        eventing.DefaultConfig,
 }
 
 var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{

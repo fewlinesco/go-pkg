@@ -18,6 +18,16 @@ var (
 	ErrNoEventsToSchedule = errors.New("no events to schedule")
 )
 
+// Config defines the properties needed to publish and consume events
+type Config struct {
+	URL     string `json:"url"`
+}
+
+// DefaultConfig defines the default properties for publishing and consuming events
+var DefaultConfig = Config{
+	URL: "",
+}
+
 type eventStatus string
 
 // Possible event status
