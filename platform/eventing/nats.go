@@ -26,13 +26,16 @@ func NewNatsPublisher(natserver string, natsubject string) (client.Client, error
 	return natsClient, nil
 }
 
+// Consumer describes how a consumer looks like
 type Consumer struct {
 	Scheduler ConsumerScheduler
 	Listener  Listener
 }
 
+// Handler defines what an event handler looks like
 type Handler func(context.Context, Event) error
 
+// NewNatsConsumer initializes the settings needed for a new Nats consumer
 func NewNatsConsumer(URL string, identifier string, subjects []string, db *sqlx.DB, logger *log.Logger) *Consumer {
 	return &Consumer{
 		Scheduler: ConsumerScheduler{
@@ -56,6 +59,7 @@ func NewNatsConsumer(URL string, identifier string, subjects []string, db *sqlx.
 	}
 }
 
+// HandleEvent will register any handlers for event
 func (c *Consumer) HandleEvent(eventType string, handler Handler) {
 	c.Scheduler.Handlers[eventType] = handler
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// ConsumerScheduler describes how the events which need to be consumed
+// will be handled
 type ConsumerScheduler struct {
 	PollingInterval time.Duration
 	DispatchTimeout time.Duration
@@ -32,6 +34,8 @@ func (c *ConsumerScheduler) Shutdown() {
 	<-c.stopped
 }
 
+// Start starts the consumer scheduler which will poll the DB at certain intervals
+// for new queued events which needs to be consumed
 func (c *ConsumerScheduler) Start() error {
 	ticker := time.NewTicker(c.PollingInterval)
 	done := make(chan error)

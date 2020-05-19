@@ -32,7 +32,8 @@ func NewListener(URL string, subjects []string, db *sqlx.DB, logger *log.Logger)
 	}
 }
 
-// Start starts a consumer for the provided subjects
+// Start starts a listener for the provided subjects
+// It will save all events for the subjects in the DB
 func (listener *Listener) Start() {
 	for _, subject := range listener.subjects {
 		ctx := context.WithValue(context.Background(), listenerSubject(subject), subject)
