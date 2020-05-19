@@ -164,6 +164,18 @@ func (db *DB) NamedExecContext(ctx context.Context, statement string, arg interf
 	return response, err
 }
 
+func (db *DB) PingContext(ctx context.Context) error {
+	var err error
+
+	metrics.RecordElapsedTimeInMilliseconds(ctx, DefaultMetrics.QueryLatencyMs, func() {
+		err = db.db.PingContext(ctx)
+	})
+
+	metrics.RecordError(ctx, DefaultMetrics.QueryErrorTotal, err)
+
+	return err
+}
+
 func (tx *Tx) Commit() error {
 	return tx.tx.Commit()
 }

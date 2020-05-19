@@ -41,12 +41,12 @@ func NewServer(config ServerConfig, router http.Handler) *http.Server {
 	return &server
 }
 
-func NewMonitoringServer(config ServerConfig, logger *log.Logger, metricsHandler Handler, healthzHandler Handler) *http.Server {
+func NewMonitoringServer(config ServerConfig, logger *log.Logger, metricsHandler Handler, serviceCheckers []HealthzChecker) *http.Server {
 	router := NewRouter(logger, DefaultMiddlewares(logger))
 
 	router.HandleFunc("GET", "/metrics", metricsHandler)
 	router.HandleFunc("GET", "/ping", pingHandler)
-	router.HandleFunc("GET", "/healthz", healthzHandler)
+	router.HandleFunc("GET", "/healthz", HealthzHandler(serviceCheckers))
 	return NewServer(config, router)
 }
 
