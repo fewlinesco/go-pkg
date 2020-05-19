@@ -1,10 +1,14 @@
 package eventing
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/cloudevents/sdk-go/v2/client"
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
+	"github.com/jmoiron/sqlx"
 )
 
 // NewNatsPublisher creates a new event publisher using nats.
@@ -22,17 +26,43 @@ func NewNatsPublisher(natserver string, natsubject string) (client.Client, error
 	return natsClient, nil
 }
 
-// NewNatsConsumer creates a new event consumer using nats.
-func NewNatsConsumer(natserver string, natsubject string) (client.Client, error) {
-	consumer, err := cloudeventsnats.NewConsumer(natserver, natsubject, cloudeventsnats.NatsOptions())
-	if err != nil {
-		return nil, fmt.Errorf("can't create nats consumer: %v", err)
-	}
+type Consumer struct {
+	Scheduler ConsumerScheduler
+	Listener  Listener
+}
 
-	natsClient, err := client.New(consumer)
-	if err != nil {
-		return nil, fmt.Errorf("can't create nats client: %v", err)
-	}
+type Handler func(context.Context, Event) error
 
-	return natsClient, nil
+func NewNatsConsumer(URL string, identifier string, subjects []string, db *sqlx.DB, logger *log.Logger) *Consumer {
+	return &Consumer{
+		Scheduler: ConsumerScheduler{
+			PollingInterval: 500 * time.Millisecond,
+			DispatchTimeout: 400 * time.Millisecond,
+			BatchSize:       150,
+
+			Handlers:   make(map[string]Handler, 0),
+			identifier: identifier,
+			db:         db,
+			logger:     logger,
+			shutdown:   make(chan bool, 1),
+			stopped:    make(chan bool, 1),
+		},
+		Listener: Listener{
+			URL:      URL,
+			subjects: subjects,
+			db:       db,
+			logger:   logger,
+		},
+	}
+}
+
+func (c *Consumer) HandleEvent(eventType string, handler Handler) {
+	c.Scheduler.Handlers[eventType] = handler
+}
+
+func (c *Consumer) Start() error {
+	c.Listener.Start()
+
+	c.Scheduler.Start()
+	return nil
 }
