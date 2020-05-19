@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
+	nats "github.com/nats-io/nats.go"
 )
 
 var (
@@ -20,12 +21,12 @@ var (
 
 // Config defines the properties needed to publish and consume events
 type Config struct {
-	URL     string `json:"url"`
+	URL string `json:"url"`
 }
 
 // DefaultConfig defines the default properties for publishing and consuming events
 var DefaultConfig = Config{
-	URL: "",
+	URL: nats.DefaultURL,
 }
 
 type eventStatus string
