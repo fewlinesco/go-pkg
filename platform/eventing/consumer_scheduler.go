@@ -19,10 +19,9 @@ type ConsumerScheduler struct {
 	BatchSize       int
 	Handlers        map[string]Handler
 
-	identifier string
-	db         *sqlx.DB
-	logger     *log.Logger
-	err        error
+	Identifier string
+	DB         *sqlx.DB
+	Logger     *log.Logger
 	shutdown   chan bool
 	stopped    chan bool
 }
@@ -51,13 +50,13 @@ func (c *ConsumerScheduler) Start() error {
 				start := time.Now()
 
 				log := func(eventid string, message string) {
-					c.logger.Printf(`duration="%s" eventid="%s" message="%s"`, time.Since(start), eventid, message)
+					c.Logger.Printf(`duration="%s" eventid="%s" message="%s"`, time.Since(start), eventid, message)
 				}
 
 				ctx, cancel := context.WithTimeout(context.Background(), c.DispatchTimeout)
 				defer cancel()
 
-				evs, err := ScheduleNextEventsToConsume(ctx, c.db, c.identifier)
+				evs, err := ScheduleNextEventsToConsume(ctx, c.DB, c.Identifier)
 				if err != nil {
 					if errors.Is(err, ErrNoEventsToSchedule) {
 						continue
@@ -78,7 +77,7 @@ func (c *ConsumerScheduler) Start() error {
 						if !ok {
 							err := fmt.Errorf("no handler matching this event: %v", NoMatchingHandlerError)
 							log(ev.ID, err.Error())
-							if _, err := MarkConsumerEventAsFailed(ctx, c.db, ev, err.Error()); err != nil {
+							if _, err := MarkConsumerEventAsFailed(ctx, c.DB, ev, err.Error()); err != nil {
 								log(ev.ID, fmt.Sprintf("could not mark consumer event as failed: %v", err))
 							}
 							return
@@ -88,13 +87,13 @@ func (c *ConsumerScheduler) Start() error {
 						if err != nil {
 							log(ev.ID, fmt.Sprintf("handling failed: %v", err))
 
-							_, err := MarkConsumerEventAsFailed(ctx, c.db, ev, err.Error())
+							_, err := MarkConsumerEventAsFailed(ctx, c.DB, ev, err.Error())
 							if err != nil {
 								log(ev.ID, fmt.Sprintf("could not mark consumer event as failed: %v", err))
 							}
 						}
 
-						_, err = MarkConsumedEventAsProcessed(ctx, c.db, ev)
+						_, err = MarkConsumedEventAsProcessed(ctx, c.DB, ev)
 						if err != nil {
 							log(ev.ID, fmt.Sprintf("could not mark consumed event as processed %v", err))
 						}
