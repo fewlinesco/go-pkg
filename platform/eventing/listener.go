@@ -16,16 +16,16 @@ type listenerSubject string
 
 // Listener defines what a nats listener looks like
 type Listener struct {
-	config   Config
+	URL      string
 	subjects []string
 	db       *sqlx.DB
 	logger   *log.Logger
 }
 
 // NewListener creates a new config for a listener
-func NewListener(config Config, subjects []string, db *sqlx.DB, logger *log.Logger) *Listener {
+func NewListener(URL string, subjects []string, db *sqlx.DB, logger *log.Logger) *Listener {
 	return &Listener{
-		config:   config,
+		URL:      URL,
 		subjects: subjects,
 		db:       db,
 		logger:   logger,
@@ -37,7 +37,7 @@ func (listener *Listener) Start() {
 	for _, subject := range listener.subjects {
 		ctx := context.WithValue(context.Background(), listenerSubject(subject), subject)
 
-		natsConsumer, err := cloudeventsnats.NewConsumer(listener.config.URL, subject, cloudeventsnats.NatsOptions())
+		natsConsumer, err := cloudeventsnats.NewConsumer(listener.URL, subject, cloudeventsnats.NatsOptions())
 		if err != nil {
 			listener.logger.Printf("failed to create nats consumer, %v", err)
 		}
