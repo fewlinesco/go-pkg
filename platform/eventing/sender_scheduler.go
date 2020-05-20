@@ -11,8 +11,6 @@ import (
 	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/jmoiron/sqlx"
-
-	cloudeventsv2 "github.com/cloudevents/sdk-go/v2"
 )
 
 // SenderScheduler represents the datastructure in charge of dispatching events
@@ -52,11 +50,6 @@ func NewSenderScheduler(identifier string, cloudeventClient client.Client, logge
 // Shutdown gracefully stop the event processor
 func (s *SenderScheduler) Shutdown() {
 	<-s.stopped
-}
-
-func receive(ctx context.Context, event cloudeventsv2.Event) error {
-	fmt.Printf("Got Event Context: %+v\n", event.Context)
-	return nil
 }
 
 // Start a new goroutine to send awaiting events using CloudEvents
