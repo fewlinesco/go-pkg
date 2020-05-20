@@ -37,6 +37,7 @@ const (
 	EventStatusScheduled             = "scheduled"
 	EventStatusFailed                = "failed"
 	EventStatusProcessed             = "processed"
+	EventStatusDiscarded             = "discarded"
 )
 
 // Event stores all the information required in order to dispatch an event to the Broker
@@ -272,6 +273,20 @@ func MarkConsumedEventAsProcessed(ctx context.Context, db *sqlx.DB, ev Event) (E
 
 	if _, err := db.NamedExecContext(ctx, "UPDATE consumer_events SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
 		return ev, fmt.Errorf("can't update: %v", err)
+	}
+
+	return ev, nil
+}
+
+// MarkConsumerEventAsDiscarded will mark a consumer event as discarded
+// This is the case if a certain event type does not have a handler registered for it
+func MarkConsumerEventAsDiscarded(ctx context.Context, db *sqlx.DB, ev Event) (Event, error) {
+	ev.Status = EventStatusDiscarded
+	now := time.Now()
+	ev.FinishedAt = &now
+
+	if _, err := db.NamedExecContext(ctx, "UPDATE consumer_events SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
+		return ev, fmt.Errorf("can't mark event as discarded: %v", err)
 	}
 
 	return ev, nil

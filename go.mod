@@ -17,6 +17,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lib/pq v1.3.0
+	github.com/nats-io/nats.go v1.9.1
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opencensus.io v0.22.3
 	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6 // indirect
