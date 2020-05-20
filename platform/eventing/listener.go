@@ -14,7 +14,7 @@ import (
 
 type listenerSubject string
 
-// Listener defines what a nats listener looks like
+// Listener subscribes to subjects/queues in the broker and persists them in a local database
 type Listener struct {
 	URL      string
 	subjects []string
