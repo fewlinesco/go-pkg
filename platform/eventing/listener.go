@@ -48,7 +48,7 @@ func (listener *Listener) Start() {
 			listener.logger.Printf("failed to create client, %v", err)
 		}
 
-		listener.logger.Printf("Consumer started for: %s", subject)
+		listener.logger.Printf("consumer started for: %s", subject)
 
 		go func(ctx context.Context) {
 			for {
@@ -62,7 +62,7 @@ func (listener *Listener) Start() {
 						log(ev.ID(), fmt.Sprintf("can't queue event: %v", err))
 					}
 
-					log(ev.ID(), "Event queued")
+					log(ev.ID(), "event queued")
 
 					return nil
 				}); err != nil {
