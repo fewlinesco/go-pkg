@@ -12,10 +12,10 @@ import (
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/getsentry/sentry-go"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/logging"
+	"github.com/fewlinesco/go-pkg/platform/metrics"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/fewlinesco/go-pkg/platform/tracing"
 	"github.com/fewlinesco/go-pkg/platform/web"
@@ -44,7 +44,7 @@ type Application struct {
 type ClassicalApplication struct {
 	Application
 	config   ClassicalApplicationConfig
-	Database *sqlx.DB
+	Database *database.DB
 }
 
 var DefaultApplicationConfig = ApplicationConfig{
@@ -57,6 +57,15 @@ var DefaultApplicationConfig = ApplicationConfig{
 var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
 	ApplicationConfig: DefaultApplicationConfig,
 	Database:          database.DefaultConfig,
+}
+
+func DefaultClassicalApplicationMetricViews() []*metrics.View {
+	var views []*metrics.View
+
+	views = append(views, database.MetricViews...)
+	views = append(views, web.MetricViews...)
+
+	return views
 }
 
 func ReadConfiguration(filepath string, cfg interface{}) error {
@@ -99,17 +108,22 @@ func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
 	}, nil
 }
 
-func (a *Application) Start(arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker) error {
+func (a *Application) Start(name string, arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker) error {
 	a.Router = router
 
-	return a.StartServers(serviceCheckers)
+	return a.StartServers(name, serviceCheckers)
 }
-func (c *ClassicalApplication) Start(arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
+
+func (c *ClassicalApplication) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
 	var command string
 
 	if len(arguments) > 0 {
 		command = arguments[0]
 		arguments = arguments[1:]
+	}
+
+	if err := metrics.RegisterViews(metricViews...); err != nil {
+		return err
 	}
 
 	defaultServiceCheckers := []web.HealthzChecker{database.HealthCheck(c.Database)}
@@ -119,7 +133,7 @@ func (c *ClassicalApplication) Start(arguments []string, router *web.Router, ser
 	case "migrate":
 		return c.StartMigrations(migrations)
 	default:
-		return c.Application.Start(arguments, router, serviceCheckers)
+		return c.Application.Start(name, arguments, router, serviceCheckers)
 	}
 }
 
@@ -127,7 +141,7 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 	return database.Migrate(c.Database, migrations)
 }
 
-func (a *Application) StartServers(serviceCheckers []web.HealthzChecker) error {
+func (a *Application) StartServers(name string, serviceCheckers []web.HealthzChecker) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
@@ -140,9 +154,14 @@ func (a *Application) StartServers(serviceCheckers []web.HealthzChecker) error {
 		a.Logger.Println("stop tracing endpoint")
 	}()
 
+	metricsHandler, err := metrics.CreateHandler(name)
+	if err != nil {
+		return fmt.Errorf("can't create metrics handler: %v", err)
+	}
+
 	go func() {
 		a.Logger.Println("start monitoring server on ", a.config.Monitoring.Address)
-		a.serverErrors <- web.NewMonitoringServer(a.config.Monitoring, a.Logger, serviceCheckers).ListenAndServe()
+		a.serverErrors <- web.NewMonitoringServer(a.config.Monitoring, a.Logger, web.WrapNetHTTPHandler("metrics", metricsHandler), serviceCheckers).ListenAndServe()
 	}()
 
 	if err := monitoring.CreateNewErrorMonitoring(a.config.ErrorMonitoring); err != nil {

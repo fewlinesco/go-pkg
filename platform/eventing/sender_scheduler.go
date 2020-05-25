@@ -10,7 +10,8 @@ import (
 
 	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/cloudevents/sdk-go/v2/event"
-	"github.com/jmoiron/sqlx"
+
+	"github.com/fewlinesco/go-pkg/platform/database"
 )
 
 // SenderScheduler represents the datastructure in charge of dispatching events
@@ -22,7 +23,7 @@ type SenderScheduler struct {
 
 	cloudEventClient client.Client
 	identifier       string
-	db               *sqlx.DB
+	db               *database.DB
 	eventSourceName  string
 	logger           *log.Logger
 	err              error
@@ -31,7 +32,7 @@ type SenderScheduler struct {
 }
 
 // NewSenderScheduler initializes a new event sender scheduler
-func NewSenderScheduler(identifier string, cloudeventClient client.Client, logger *log.Logger, db *sqlx.DB, source string) *SenderScheduler {
+func NewSenderScheduler(identifier string, cloudeventClient client.Client, logger *log.Logger, db *database.DB, source string) *SenderScheduler {
 	return &SenderScheduler{
 		BatchSize:       150,
 		PollingInterval: 500 * time.Millisecond,

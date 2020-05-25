@@ -27,6 +27,17 @@ type Values struct {
 	StatusCode int
 }
 
+func WrapNetHTTPHandler(name string, h http.Handler) Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+		ctx, span := trace.StartSpan(ctx, fmt.Sprintf("internal.platform.web.WrapNetHTTP.%s", name))
+		defer span.End()
+
+		h.ServeHTTP(w, r)
+
+		return nil
+	}
+}
+
 func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
 	app := Router{
 		Router:      mux.NewRouter(),

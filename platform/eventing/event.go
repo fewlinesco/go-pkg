@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
+
+	"github.com/fewlinesco/go-pkg/platform/database"
 )
 
 var (
@@ -48,7 +49,7 @@ type Event struct {
 // eventtype: is the name of the event (e.g `application.created`)
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
-func CreatePublisherEvent(ctx context.Context, tx *sqlx.Tx, subject string, eventtype string, dataschema string, data interface{}) (Event, error) {
+func CreatePublisherEvent(ctx context.Context, tx *database.Tx, subject string, eventtype string, dataschema string, data interface{}) (Event, error) {
 	rawdata, err := json.Marshal(data)
 	if err != nil {
 		return Event{}, fmt.Errorf("can't marshal event: %w", err)
@@ -83,7 +84,7 @@ func CreatePublisherEvent(ctx context.Context, tx *sqlx.Tx, subject string, even
 // eventtype: is the name of the event (e.g `application.created`)
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
-func CreateConsumerEvent(ctx context.Context, tx *sqlx.Tx, subject string, eventtype string, dataschema string, data interface{}) (Event, error) {
+func CreateConsumerEvent(ctx context.Context, tx *database.Tx, subject string, eventtype string, dataschema string, data interface{}) (Event, error) {
 	rawdata, err := json.Marshal(data)
 	if err != nil {
 		return Event{}, fmt.Errorf("can't marshal event: %w", err)
@@ -115,7 +116,7 @@ func CreateConsumerEvent(ctx context.Context, tx *sqlx.Tx, subject string, event
 
 // ScheduleNextEventsToConsume find the next events to consumed, mark them as "scheduled" and send them back.
 // It's done in a transaction to ensure the event is also marked as "scheduled" for other workers
-func ScheduleNextEventsToConsume(ctx context.Context, db *sqlx.DB, workerName string) ([]Event, error) {
+func ScheduleNextEventsToConsume(ctx context.Context, db *database.DB, workerName string) ([]Event, error) {
 	var evs []Event
 
 	err := db.SelectContext(ctx, &evs, `
@@ -147,7 +148,7 @@ func ScheduleNextEventsToConsume(ctx context.Context, db *sqlx.DB, workerName st
 
 // ScheduleNextEventsToPublish find the next events to process, mark them as "scheduled" and send them back.
 // It's done in a transaction to ensure the event is also marked as "scheduled" for other workers
-func ScheduleNextEventsToPublish(ctx context.Context, db *sqlx.DB, workerName string) ([]Event, error) {
+func ScheduleNextEventsToPublish(ctx context.Context, db *database.DB, workerName string) ([]Event, error) {
 	var evs []Event
 
 	err := db.SelectContext(ctx, &evs, `
@@ -178,7 +179,7 @@ func ScheduleNextEventsToPublish(ctx context.Context, db *sqlx.DB, workerName st
 }
 
 // MarkConsumerEventAsFailed logs the failure and the timestamp. It returns the new updated event
-func MarkConsumerEventAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reason string) (Event, error) {
+func MarkConsumerEventAsFailed(ctx context.Context, db *database.DB, ev Event, reason string) (Event, error) {
 	ev.Status = EventStatusFailed
 	ev.Error = &reason
 	now := time.Now()
@@ -192,7 +193,7 @@ func MarkConsumerEventAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reaso
 }
 
 // MarkPublisherEventAsFailed logs the failure and the timestamp. It returns the new updated event
-func MarkPublisherEventAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reason string) (Event, error) {
+func MarkPublisherEventAsFailed(ctx context.Context, db *database.DB, ev Event, reason string) (Event, error) {
 	ev.Status = EventStatusFailed
 	ev.Error = &reason
 	now := time.Now()
@@ -206,7 +207,7 @@ func MarkPublisherEventAsFailed(ctx context.Context, db *sqlx.DB, ev Event, reas
 }
 
 // ReenqueWorkerPublisherEvents changes all event status to make them ready to be picked-up again
-func ReenqueWorkerPublisherEvents(ctx context.Context, db *sqlx.DB, workerName string) error {
+func ReenqueWorkerPublisherEvents(ctx context.Context, db *database.DB, workerName string) error {
 	if _, err := db.ExecContext(ctx, "UPDATE publisher_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
 		return fmt.Errorf("can't re-enqueue worker's publisher events: %v", err)
 	}
@@ -215,7 +216,7 @@ func ReenqueWorkerPublisherEvents(ctx context.Context, db *sqlx.DB, workerName s
 }
 
 // ReenqueWorkerConsumerEvents changes all event status to make them ready to be picked-up again
-func ReenqueWorkerConsumerEvents(ctx context.Context, db *sqlx.DB, workerName string) error {
+func ReenqueWorkerConsumerEvents(ctx context.Context, db *database.DB, workerName string) error {
 	if _, err := db.ExecContext(ctx, "UPDATE consumer_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
 		return fmt.Errorf("can't re-enqueue worker's consumer events: %v", err)
 	}
@@ -224,7 +225,7 @@ func ReenqueWorkerConsumerEvents(ctx context.Context, db *sqlx.DB, workerName st
 }
 
 // ReenquePublisherEvent changes the event status to make it ready to be picked-up again
-func ReenquePublisherEvent(ctx context.Context, db *sqlx.DB, ev Event) error {
+func ReenquePublisherEvent(ctx context.Context, db *database.DB, ev Event) error {
 	ev.Status = EventStatusQueued
 
 	if _, err := db.NamedExecContext(ctx, "UPDATE publisher_events SET status = :status WHERE id = :id", ev); err != nil {
@@ -235,7 +236,7 @@ func ReenquePublisherEvent(ctx context.Context, db *sqlx.DB, ev Event) error {
 }
 
 // ReenqueConsumerEvent changes the event status to make it ready to be picked-up again
-func ReenqueConsumerEvent(ctx context.Context, db *sqlx.DB, ev Event) error {
+func ReenqueConsumerEvent(ctx context.Context, db *database.DB, ev Event) error {
 	ev.Status = EventStatusQueued
 
 	if _, err := db.NamedExecContext(ctx, "UPDATE consumer_events SET status = :status WHERE id = :id", ev); err != nil {
@@ -246,7 +247,7 @@ func ReenqueConsumerEvent(ctx context.Context, db *sqlx.DB, ev Event) error {
 }
 
 // MarkPublishedEventAsProcessed It returns the new updated event
-func MarkPublishedEventAsProcessed(ctx context.Context, db *sqlx.DB, ev Event) (Event, error) {
+func MarkPublishedEventAsProcessed(ctx context.Context, db *database.DB, ev Event) (Event, error) {
 	ev.Status = EventStatusProcessed
 	now := time.Now()
 	ev.FinishedAt = &now
@@ -259,7 +260,7 @@ func MarkPublishedEventAsProcessed(ctx context.Context, db *sqlx.DB, ev Event) (
 }
 
 // MarkConsumedEventAsProcessed It returns the new updated event
-func MarkConsumedEventAsProcessed(ctx context.Context, db *sqlx.DB, ev Event) (Event, error) {
+func MarkConsumedEventAsProcessed(ctx context.Context, db *database.DB, ev Event) (Event, error) {
 	ev.Status = EventStatusProcessed
 	now := time.Now()
 	ev.FinishedAt = &now
