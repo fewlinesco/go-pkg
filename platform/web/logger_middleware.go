@@ -59,8 +59,8 @@ func LoggerMiddleware(log *log.Logger) Middleware {
 			elapsedTime := time.Since(v.Now)
 
 			tags := []metrics.Tag{metrics.Tag{Key: metricTagResponseCode, Value: strconv.Itoa(statuscode)}}
-			metrics.RecordWithTags(ctx, tags, metricLatencyMs.M(float64(elapsedTime.Milliseconds())))
-			metrics.RecordWithTags(ctx, tags, metricRequestTotal.M(1))
+			metrics.RecordWithTags(ctx, tags, metricLatencyMs.Measure(float64(elapsedTime.Milliseconds())))
+			metrics.RecordWithTags(ctx, tags, metricRequestTotal.Measure(1))
 
 			log.Printf(`method="%s" path="%s" traceid="%s" statuscode="%d" duration="%s" remoteaddr="%s" message="%s"`,
 				r.Method, r.URL.Path,

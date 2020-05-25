@@ -11,7 +11,7 @@ import (
 // RecordError do a `1` measure each time it receives an error. If error is nil, it's a noop
 func RecordError(ctx context.Context, measure *Float64Measure, err error) {
 	if err != nil {
-		Record(ctx, measure.M(1))
+		Record(ctx, measure.Measure(1))
 	}
 }
 
@@ -21,7 +21,7 @@ func RecordElapsedTimeInMilliseconds(ctx context.Context, measure *Float64Measur
 
 	cb()
 
-	Record(ctx, measure.M(float64(time.Now().Sub(start).Milliseconds())))
+	Record(ctx, measure.Measure(float64(time.Now().Sub(start).Milliseconds())))
 }
 
 // Record saves a specific measurement to the current context
