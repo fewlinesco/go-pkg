@@ -10,6 +10,7 @@ import (
 	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/cloudevents/sdk-go/v2/event"
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
+	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,6 +22,8 @@ type Listener struct {
 	subjects []string
 	db       *sqlx.DB
 	logger   *log.Logger
+
+	maxNumberOfRetries int
 }
 
 // NewListener creates a new config for a listener
@@ -30,6 +33,8 @@ func NewListener(URL string, subjects []string, db *sqlx.DB, logger *log.Logger)
 		subjects: subjects,
 		db:       db,
 		logger:   logger,
+
+		maxNumberOfRetries: 5,
 	}
 }
 
@@ -53,8 +58,8 @@ func (listener *Listener) Start() {
 
 		listener.logger.Printf("consumer started for: %s", subject)
 
-		go func(ctx context.Context) {
-			for {
+		go func(ctx context.Context, listener *Listener, client client.Client, subject string) {
+			for i := 0; i < listener.maxNumberOfRetries; i++ {
 				if err := natsClient.StartReceiver(ctx, func(ctx context.Context, ev event.Event) error {
 					start := time.Now()
 					log := func(eventid string, message string) {
@@ -63,15 +68,21 @@ func (listener *Listener) Start() {
 
 					if _, err := CreateConsumerEvent(ctx, listener.db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
 						log(ev.ID(), fmt.Sprintf("can't queue event: %v", err))
+						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).AddTag("event", ev.String()).Log()
+
+						return err
 					}
 
 					log(ev.ID(), "event queued")
 
 					return nil
 				}); err != nil {
-					listener.logger.Printf("failed to start nats receiver, %s", err.Error())
+					listener.logger.Printf("Nats receiver failed, %s", err.Error())
 				}
 			}
-		}(ctx)
+
+			listener.logger.Printf("Nats receiver for: %s has failed to start too many times", subject)
+			os.Exit(1)
+		}(ctx, listener, natsClient, subject)
 	}
 }
