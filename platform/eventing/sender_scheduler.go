@@ -26,7 +26,6 @@ type SenderScheduler struct {
 	db               *database.DB
 	eventSourceName  string
 	logger           *log.Logger
-	err              error
 	shutdown         chan bool
 	stopped          chan bool
 }

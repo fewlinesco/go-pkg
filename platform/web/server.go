@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// ServerConfig defines how to configure an HTTP server
 type ServerConfig struct {
 	Address         string `json:"address"`
 	ReadTimeout     int    `json:"read_timeout"`
@@ -16,6 +17,7 @@ type ServerConfig struct {
 	ShutdownTimeout int    `json:"shutdown_timeout"`
 }
 
+// DefaultServerConfig defines the default HTTP server configuration
 var DefaultServerConfig = ServerConfig{
 	Address:         ":8080",
 	ReadTimeout:     30,
@@ -23,6 +25,7 @@ var DefaultServerConfig = ServerConfig{
 	ShutdownTimeout: 45,
 }
 
+// DefaultMonitoringConfig defines the default HTTP monitoring server configuration
 var DefaultMonitoringConfig = ServerConfig{
 	Address:         ":8081",
 	ReadTimeout:     30,
@@ -30,6 +33,7 @@ var DefaultMonitoringConfig = ServerConfig{
 	ShutdownTimeout: 45,
 }
 
+// NewServer creates a new HTTP server
 func NewServer(config ServerConfig, router http.Handler) *http.Server {
 	server := http.Server{
 		Addr:         config.Address,
@@ -41,6 +45,7 @@ func NewServer(config ServerConfig, router http.Handler) *http.Server {
 	return &server
 }
 
+// NewMonitoringServer creates a new monitoring server configured for metrics and healthz
 func NewMonitoringServer(config ServerConfig, logger *log.Logger, metricsHandler Handler, serviceCheckers []HealthzChecker) *http.Server {
 	router := NewRouter(logger, DefaultMiddlewares(logger))
 

@@ -9,6 +9,7 @@ import (
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 )
 
+// Respond is a helper function in charge of sending back a JSON response to the client
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
 	v := ctx.Value(KeyValues).(*Values)
 	v.StatusCode = statusCode
@@ -24,6 +25,8 @@ func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statu
 	return json.NewEncoder(w).Encode(data)
 }
 
+// RespondError is a helper function in charge of sending back a JSON response to the client based on an error.
+// The error needs to be a wrapper around a web.Error, otherwise it will generate a 500 with a default message.
 func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	webErr, ok := errors.Unwrap(err).(*Error)
 	if !ok {

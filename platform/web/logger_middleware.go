@@ -19,14 +19,15 @@ var (
 
 	metricTagResponseCode = metrics.MustNewTagKey("http/response_code")
 
+	// MetricViews are the generic metrics generated for any HTTP server
 	MetricViews = []*metrics.View{
-		&metrics.View{
+		{
 			Name:        "http/latency",
 			Measure:     metricLatencyMs,
 			Description: "The distribution of the latencies",
 			Aggregation: metrics.ViewDistribution(0, 25, 100, 200, 400, 800, 10000),
 		},
-		&metrics.View{
+		{
 			Name:        "http/requests",
 			Measure:     metricRequestTotal,
 			Description: "The number of requests",
@@ -36,6 +37,7 @@ var (
 	}
 )
 
+// LoggerMiddleware is in charge of logging each requests with their duration and some other useful data.
 func LoggerMiddleware(log *log.Logger) Middleware {
 	return func(before Handler) Handler {
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
@@ -58,7 +60,7 @@ func LoggerMiddleware(log *log.Logger) Middleware {
 
 			elapsedTime := time.Since(v.Now)
 
-			tags := []metrics.Tag{metrics.Tag{Key: metricTagResponseCode, Value: strconv.Itoa(statuscode)}}
+			tags := []metrics.Tag{{Key: metricTagResponseCode, Value: strconv.Itoa(statuscode)}}
 			metrics.RecordWithTags(ctx, tags, metricLatencyMs.Measure(float64(elapsedTime.Milliseconds())))
 			metrics.RecordWithTags(ctx, tags, metricRequestTotal.Measure(1))
 

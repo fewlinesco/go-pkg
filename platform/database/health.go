@@ -8,6 +8,7 @@ import (
 	"github.com/fewlinesco/go-pkg/platform/web"
 )
 
+// HealthCheck is a generic health checker in charge of checking the database availability
 func HealthCheck(db *DB) web.HealthzChecker {
 	return func(ctx context.Context) web.HealthzStatus {
 		ctx, span := trace.StartSpan(ctx, "database.HealthChecker")

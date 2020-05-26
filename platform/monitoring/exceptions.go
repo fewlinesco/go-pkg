@@ -4,39 +4,45 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+// Exception ??
 type Exception struct {
-	Level      *sentry.Level
-	Tags       map[string]string
-	Contexts   map[string]interface{}
-	Err        error
+	Level    *sentry.Level
+	Tags     map[string]string
+	Contexts map[string]interface{}
+	Err      error
 }
 
+// CaptureException ??
 func CaptureException(exception error) Exception {
 	return Exception{
-		Err:        exception,
-		Tags:       make(map[string]string, 0),
-		Contexts:   make(map[string]interface{}, 0),
+		Err:      exception,
+		Tags:     make(map[string]string),
+		Contexts: make(map[string]interface{}),
 	}
 }
 
+// SetLevel ??
 func (exception Exception) SetLevel(level sentry.Level) Exception {
 	exception.Level = &level
 
 	return exception
 }
 
+// AddTag ??
 func (exception Exception) AddTag(key string, value string) Exception {
 	exception.Tags[key] = value
 
 	return exception
 }
 
+// AddContext ??
 func (exception Exception) AddContext(key string, context interface{}) Exception {
 	exception.Contexts[key] = context
 
 	return exception
 }
 
+// Log ??
 func (exception Exception) Log() {
 	sentry.WithScope(func(scope *sentry.Scope) {
 		for key, tag := range exception.Tags {

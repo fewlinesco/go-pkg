@@ -19,17 +19,25 @@ import (
 
 type ctxKey int
 
+// KeyValues is the key used to store/fetch the web values stored in the context.
+// It needs to be public but we use it wisely. It's not a good practice to get data from there
+// in the application context
 const KeyValues ctxKey = 1
 
+// Values represents all the web values stored in the context
 type Values struct {
 	TraceID    string
 	Now        time.Time
 	StatusCode int
 }
 
+// Handler is the type application needs to conform to in order to handle HTTP requests
+type Handler func(context.Context, http.ResponseWriter, *http.Request, map[string]string) error
+
+// WrapNetHTTPHandler is a simple handler that wraps a classical and existing HTTP handler.
 func WrapNetHTTPHandler(name string, h http.Handler) Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
-		ctx, span := trace.StartSpan(ctx, fmt.Sprintf("internal.platform.web.WrapNetHTTP.%s", name))
+		_, span := trace.StartSpan(ctx, fmt.Sprintf("internal.platform.web.WrapNetHTTP.%s", name))
 		defer span.End()
 
 		h.ServeHTTP(w, r)
@@ -38,6 +46,7 @@ func WrapNetHTTPHandler(name string, h http.Handler) Handler {
 	}
 }
 
+// NewRouter creates a new Router with a list of default middlewares that will be applied to all routes
 func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
 	app := Router{
 		Router:      mux.NewRouter(),
@@ -46,7 +55,7 @@ func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
 	}
 
 	app.Router.NotFoundHandler = app.defineHandler(func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
-		ctx, span := trace.StartSpan(ctx, "internal.platform.web.NotFoundHandler")
+		_, span := trace.StartSpan(ctx, "internal.platform.web.NotFoundHandler")
 		defer span.End()
 
 		return fmt.Errorf("%w", NewErrNotFoundResponse())
@@ -60,8 +69,7 @@ func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
 	return &app
 }
 
-type Handler func(context.Context, http.ResponseWriter, *http.Request, map[string]string) error
-
+// Router represents the application routes
 type Router struct {
 	*mux.Router
 	logger      *log.Logger
@@ -70,6 +78,7 @@ type Router struct {
 	shutdown    chan os.Signal
 }
 
+// HandleFunc is a way to add a new router to the router. The middlewares will be added to the default middlewares set on the server. It's not a replacement.
 func (a *Router) HandleFunc(method string, path string, handler Handler, middlewares ...Middleware) {
 	a.Router.HandleFunc(path, a.defineHandler(handler, middlewares...)).Methods(method)
 }
@@ -104,18 +113,18 @@ func (a *Router) defineHandler(handler Handler, middlewares ...Middleware) http.
 	}
 }
 
+// NewSubRouter creates a scoped subrouter on a path with its own set of default middlewares and routes.
 func (a *Router) NewSubRouter(pathPrefix string, middleWares ...Middleware) *Router {
 	subRouter := *a
 
 	subRouter.Router = a.PathPrefix(pathPrefix).Subrouter()
 
-	for _, m := range middleWares {
-		subRouter.middlewares = append(subRouter.middlewares, m)
-	}
+	subRouter.middlewares = append(subRouter.middlewares, middleWares...)
 
 	return &subRouter
 }
 
+// SignalShutdown asks the HTTP server to stop
 func (a *Router) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
