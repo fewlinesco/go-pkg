@@ -77,7 +77,7 @@ func (c *ConsumerScheduler) Start() error {
 						if !ok {
 							err := fmt.Errorf("no handler matching this event: %v", NoMatchingHandlerError)
 							log(ev.ID, err.Error())
-							if _, err := MarkConsumerEventAsFailed(ctx, c.DB, ev, err.Error()); err != nil {
+							if _, err := MarkConsumerEventAsDiscarded(ctx, c.DB, ev); err != nil {
 								log(ev.ID, fmt.Sprintf("could not mark consumer event as failed: %v", err))
 							}
 							return
