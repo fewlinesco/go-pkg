@@ -2,7 +2,6 @@ package eventing
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -59,25 +58,25 @@ func (listener *Listener) Start() {
 		listener.logger.Printf("consumer started for: %s", subject)
 
 		go func(ctx context.Context, listener *Listener, client client.Client, subject string) {
+			log := func(eventid string, message string, start time.Time) {
+				listener.logger.Printf(`duration=%s eventid="%s" message="%s"`, time.Since(start), eventid, message)
+			}
+
 			for i := 0; i < listener.maxNumberOfRetries; i++ {
 				if err := natsClient.StartReceiver(ctx, func(ctx context.Context, ev event.Event) error {
 					start := time.Now()
-					log := func(eventid string, message string) {
-						listener.logger.Printf(`duration=%s eventid="%s" message="%s"`, time.Since(start), eventid, message)
-					}
 
 					if _, err := CreateConsumerEvent(ctx, listener.db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
-						log(ev.ID(), fmt.Sprintf("can't queue event: %v", err))
 						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).AddTag("event", ev.String()).Log()
 
 						return err
 					}
 
-					log(ev.ID(), "event queued")
+					log(ev.ID(), "event queued", start)
 
 					return nil
 				}); err != nil {
-					listener.logger.Printf("Nats receiver failed, %s", err.Error())
+					listener.logger.Printf("Nats receiver failed, %s", err)
 				}
 			}
 
