@@ -86,11 +86,11 @@ func (listener *Listener) Start() {
 						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).Log()
 					}
 
-					listener.logger.Printf("Nats receiver failed, %s", err)
+					listener.logger.Printf("nats receiver failed, %s", err)
 				}
 			}
 
-			listener.logger.Printf("Nats receiver for: %s has failed to start too many times", subject)
+			listener.logger.Printf("nats receiver for: %s has failed to start too many times", subject)
 			os.Exit(1)
 		}(ctx, listener, natsClient, subject)
 	}
