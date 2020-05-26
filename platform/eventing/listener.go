@@ -2,6 +2,8 @@ package eventing
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -11,6 +13,10 @@ import (
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/jmoiron/sqlx"
+)
+
+var (
+	ErrConsumerEventCanNotBePersisted = errors.New("the event could not be persisted in the database")
 )
 
 type listenerSubject string
@@ -69,13 +75,17 @@ func (listener *Listener) Start() {
 					if _, err := CreateConsumerEvent(ctx, listener.db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
 						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).AddTag("event", ev.String()).Log()
 
-						return err
+						return fmt.Errorf("%w: %v", ErrConsumerEventCanNotBePersisted, err)
 					}
 
 					log(ev.ID(), "event queued", start)
 
 					return nil
 				}); err != nil {
+					if !errors.Is(err, ErrConsumerEventCanNotBePersisted) {
+						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).Log()
+					}
+
 					listener.logger.Printf("Nats receiver failed, %s", err)
 				}
 			}
