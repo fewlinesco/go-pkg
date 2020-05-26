@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
+	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/cloudevents/sdk-go/v2 v2.0.0-preview8
