@@ -30,7 +30,7 @@ func NewNatsPublisher(natserver string, natsubject string) (client.Client, error
 type Handler func(context.Context, Event) error
 
 // NewNatsConsumer initializes the settings needed for a new Nats consumer
-func NewNatsConsumer(URL string, identifier string, subjects []string, db *sqlx.DB, logger *log.Logger) *ConsumerScheduler {
+func NewNatsConsumer(URL string, identifier string, db *sqlx.DB, logger *log.Logger) *ConsumerScheduler {
 	return &ConsumerScheduler{
 		PollingInterval: 500 * time.Millisecond,
 		DispatchTimeout: 400 * time.Millisecond,
