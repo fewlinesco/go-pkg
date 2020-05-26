@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/cloudevents/sdk-go/v2/client"
@@ -41,11 +42,13 @@ func (listener *Listener) Start() {
 		natsConsumer, err := cloudeventsnats.NewConsumer(listener.URL, subject, cloudeventsnats.NatsOptions())
 		if err != nil {
 			listener.logger.Printf("failed to create nats consumer, %v", err)
+			os.Exit(1)
 		}
 
 		natsClient, err := client.New(natsConsumer)
 		if err != nil {
 			listener.logger.Printf("failed to create client, %v", err)
+			os.Exit(1)
 		}
 
 		listener.logger.Printf("consumer started for: %s", subject)
