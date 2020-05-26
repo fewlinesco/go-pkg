@@ -21,7 +21,7 @@ import (
 	"github.com/fewlinesco/go-pkg/platform/web"
 )
 
-// ApplicationConfig represents a minimal API configuration that can be override / augmented by the aplication
+// ApplicationConfig represents a minimal API configuration that can be override / augmented by the application
 type ApplicationConfig struct {
 	API             web.ServerConfig  `json:"api"`
 	Monitoring      web.ServerConfig  `json:"monitoring"`
@@ -29,7 +29,7 @@ type ApplicationConfig struct {
 	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
 }
 
-// ClassicalApplicationConfig represents a classical API configuration including a SQL Database and a broker that can be override / augmented by the aplication
+// ClassicalApplicationConfig represents a classical API configuration including a SQL Database and a broker that can be override / augmented by the application
 type ClassicalApplicationConfig struct {
 	ApplicationConfig
 	Database database.Config `json:"database"`
