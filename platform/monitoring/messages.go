@@ -2,7 +2,7 @@ package monitoring
 
 import "github.com/getsentry/sentry-go"
 
-// Message ??
+// Message stores all the information to dispatch an event
 type Message struct {
 	Level    *sentry.Level
 	Tags     map[string]string
@@ -10,7 +10,7 @@ type Message struct {
 	Message  string
 }
 
-// CaptureMessage ??
+// CaptureMessage creates a new message which we want to send to  Sentry
 func CaptureMessage(message string) Message {
 	return Message{
 		Message:  message,
@@ -19,28 +19,28 @@ func CaptureMessage(message string) Message {
 	}
 }
 
-// SetLevel ??
+// SetLevel sets the loglevel of the message
 func (exception Message) SetLevel(level sentry.Level) Message {
 	exception.Level = &level
 
 	return exception
 }
 
-// AddTag ??
+// AddTag sets a tag and it's value as additional information for the message
 func (exception Message) AddTag(key string, value string) Message {
 	exception.Tags[key] = value
 
 	return exception
 }
 
-// AddContext  ??
+// AddContext adds more context to the message such as diagnostic information
 func (exception Message) AddContext(key string, context interface{}) Message {
 	exception.Contexts[key] = context
 
 	return exception
 }
 
-// Log ??
+// Log sends the created message to Sentry
 func (exception Message) Log() {
 	sentry.WithScope(func(scope *sentry.Scope) {
 		for key, tag := range exception.Tags {
