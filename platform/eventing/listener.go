@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
-	"time"
 
 	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/cloudevents/sdk-go/v2/event"
+	"github.com/cloudevents/sdk-go/v2/protocol"
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
+	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
-	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -25,73 +24,103 @@ type listenerSubject string
 type Listener struct {
 	URL      string
 	subjects []string
-	db       *sqlx.DB
+	db       *database.DB
 	logger   *log.Logger
 
+	stop               chan bool
 	maxNumberOfRetries int
 }
 
 // NewListener creates a new config for a listener
-func NewListener(URL string, subjects []string, db *sqlx.DB, logger *log.Logger) *Listener {
+func NewListener(URL string, subjects []string, db *database.DB, logger *log.Logger) *Listener {
 	return &Listener{
 		URL:      URL,
 		subjects: subjects,
 		db:       db,
 		logger:   logger,
 
+		stop:               make(chan bool, 0),
 		maxNumberOfRetries: 5,
 	}
 }
 
+func (listener *Listener) Stop() {
+	listener.stop <- true
+}
+
 // Start starts a listener for the provided subjects
 // It will save all events for the subjects in the DB
-func (listener *Listener) Start() {
+func (listener *Listener) Start() error {
+	shutdown := make(chan error, 0)
+	ctx, cancel := context.WithCancel(context.Background())
+
 	for _, subject := range listener.subjects {
-		ctx := context.WithValue(context.Background(), listenerSubject(subject), subject)
+		go func(ctx context.Context) {
+			ctx = context.WithValue(ctx, listenerSubject(subject), subject)
 
-		natsConsumer, err := cloudeventsnats.NewConsumer(listener.URL, subject, cloudeventsnats.NatsOptions())
-		if err != nil {
-			listener.logger.Printf("failed to create nats consumer, %v", err)
-			os.Exit(1)
+			listener.logger.Printf("consumer started for: %s", subject)
+
+			if err := startReceiver(ctx, listener, subject); err != nil {
+				shutdown <- fmt.Errorf("receiver '%s': %v", subject, err)
+			}
+		}(ctx)
+	}
+
+	select {
+	case <-listener.stop:
+		cancel()
+		return nil
+	case err := <-shutdown:
+		cancel()
+		return fmt.Errorf("all listeners stopped: %v", err)
+	}
+}
+
+func startReceiver(ctx context.Context, listener *Listener, subject string) error {
+	natsConsumer, err := cloudeventsnats.NewConsumer(listener.URL, subject, cloudeventsnats.NatsOptions())
+	if err != nil {
+		return fmt.Errorf("failed to create nats consumer, %v", err)
+	}
+
+	natsClient, err := client.New(natsConsumer)
+	if err != nil {
+		return fmt.Errorf("failed to create client, %v", err)
+	}
+
+	go func(ctx context.Context) {
+		select {
+		case <-ctx.Done():
+			natsConsumer.Close(ctx)
+		}
+	}(ctx)
+
+	// do we need to keep a timeframe?
+	for i := 0; i < listener.maxNumberOfRetries; i++ {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			if err := natsClient.StartReceiver(ctx, receiverHandler(listener.db)); err != nil {
+				monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).Log()
+
+				listener.logger.Printf("nats receiver failed (%d/%d), %s", (i + 1), listener.maxNumberOfRetries, err)
+			}
+		}
+	}
+
+	return fmt.Errorf("failed to start too many times")
+}
+
+func receiverHandler(db *database.DB) func(context.Context, event.Event) protocol.Result {
+	return func(ctx context.Context, ev event.Event) protocol.Result {
+		// create a new trace
+
+		if _, err := CreateConsumerEvent(ctx, db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
+			// update the trace to have error information
+
+			return protocol.NewResult("%w: %v", ErrConsumerEventCanNotBePersisted, err)
 		}
 
-		natsClient, err := client.New(natsConsumer)
-		if err != nil {
-			listener.logger.Printf("failed to create client, %v", err)
-			os.Exit(1)
-		}
-
-		listener.logger.Printf("consumer started for: %s", subject)
-
-		go func(ctx context.Context, listener *Listener, client client.Client, subject string) {
-			log := func(eventid string, message string, start time.Time) {
-				listener.logger.Printf(`duration=%s eventid="%s" message="%s"`, time.Since(start), eventid, message)
-			}
-
-			for i := 0; i < listener.maxNumberOfRetries; i++ {
-				if err := natsClient.StartReceiver(ctx, func(ctx context.Context, ev event.Event) error {
-					start := time.Now()
-
-					if _, err := CreateConsumerEvent(ctx, listener.db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
-						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).AddTag("event", ev.String()).Log()
-
-						return fmt.Errorf("%w: %v", ErrConsumerEventCanNotBePersisted, err)
-					}
-
-					log(ev.ID(), "event queued", start)
-
-					return nil
-				}); err != nil {
-					if !errors.Is(err, ErrConsumerEventCanNotBePersisted) {
-						monitoring.CaptureException(err).SetLevel(monitoring.LogLevels.Error).Log()
-					}
-
-					listener.logger.Printf("nats receiver failed, %s", err)
-				}
-			}
-
-			listener.logger.Printf("nats receiver for: %s has failed to start too many times", subject)
-			os.Exit(1)
-		}(ctx, listener, natsClient, subject)
+		return nil
 	}
 }

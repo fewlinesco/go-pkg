@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/fewlinesco/go-pkg/platform/database"
 )
 
 // ConsumerScheduler describes how the events which need to be consumed
@@ -20,7 +20,7 @@ type ConsumerScheduler struct {
 	Handlers        map[string]Handler
 
 	Identifier string
-	DB         *sqlx.DB
+	DB         *database.DB
 	Logger     *log.Logger
 	shutdown   chan bool
 	stopped    chan bool

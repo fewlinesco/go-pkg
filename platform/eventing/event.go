@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/types"
 	nats "github.com/nats-io/nats.go"
 
@@ -216,7 +215,7 @@ func MarkPublisherEventAsFailed(ctx context.Context, db *database.DB, ev Event, 
 
 // ReenqueWorkerPublisherEvents changes all event status to make them ready to be picked-up again
 func ReenqueWorkerPublisherEvents(ctx context.Context, db *database.DB, workerName string) error {
-	if _, err := db.ExecContext(ctx, "UPDATE publisher_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
+	if _, err := db.ExecContext(ctx, "UPDATE publisher_events SET status = $1 WHERE worker = $2 AND status != 'processed'", EventStatusQueued, workerName); err != nil {
 		return fmt.Errorf("can't re-enqueue worker's publisher events: %v", err)
 	}
 
@@ -282,7 +281,7 @@ func MarkConsumedEventAsProcessed(ctx context.Context, db *database.DB, ev Event
 
 // MarkConsumerEventAsDiscarded will mark a consumer event as discarded
 // This is the case if a certain event type does not have a handler registered for it
-func MarkConsumerEventAsDiscarded(ctx context.Context, db *sqlx.DB, ev Event) (Event, error) {
+func MarkConsumerEventAsDiscarded(ctx context.Context, db *database.DB, ev Event) (Event, error) {
 	ev.Status = EventStatusDiscarded
 	now := time.Now()
 	ev.FinishedAt = &now

@@ -8,7 +8,7 @@ import (
 
 	"github.com/cloudevents/sdk-go/v2/client"
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
-	"github.com/jmoiron/sqlx"
+	"github.com/fewlinesco/go-pkg/platform/database"
 )
 
 // NewNatsPublisher creates a new event publisher using nats.
@@ -30,7 +30,7 @@ func NewNatsPublisher(natserver string, natsubject string) (client.Client, error
 type Handler func(context.Context, Event) error
 
 // NewNatsConsumer initializes the settings needed for a new Nats consumer
-func NewNatsConsumer(URL string, identifier string, db *sqlx.DB, logger *log.Logger) *ConsumerScheduler {
+func NewNatsConsumer(URL string, identifier string, db *database.DB, logger *log.Logger) *ConsumerScheduler {
 	return &ConsumerScheduler{
 		PollingInterval: 500 * time.Millisecond,
 		DispatchTimeout: 400 * time.Millisecond,
