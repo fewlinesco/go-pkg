@@ -12,6 +12,7 @@ import (
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
+	"go.opencensus.io/trace"
 )
 
 var (
@@ -113,10 +114,12 @@ func startReceiver(ctx context.Context, listener *Listener, subject string) erro
 
 func receiverHandler(db *database.DB) func(context.Context, event.Event) protocol.Result {
 	return func(ctx context.Context, ev event.Event) protocol.Result {
-		// create a new trace
+		ctx, span := trace.StartSpan(ctx, "eventing.EventReceived")
+		defer span.End()
 
 		if _, err := CreateConsumerEvent(ctx, db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
-			// update the trace to have error information
+			errorAttribute := trace.StringAttribute("error", err.Error())
+			span.AddAttributes(errorAttribute)
 
 			return protocol.NewResult("%w: %v", ErrConsumerEventCanNotBePersisted, err)
 		}
