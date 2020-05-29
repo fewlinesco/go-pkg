@@ -27,7 +27,7 @@ type ApplicationConfig struct {
 	Monitoring      web.ServerConfig  `json:"monitoring"`
 	Tracing         tracing.Config    `json:"tracing"`
 	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
-	Eventing        eventing.Config   `json:"eventing_config"`
+	Eventing        eventing.Config   `json:"eventing"`
 }
 
 type ClassicalApplicationConfig struct {
