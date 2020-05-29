@@ -30,6 +30,7 @@ func init() {
 	})
 }
 
+// Decode reads the body of an HTTP request as JSON and fill a struct with its content. It's also in charge of validating the content of the struct based on gopkg.in/go-playground/validator.v9 validation tags.
 func Decode(r *http.Request, val interface{}) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -40,6 +41,7 @@ func Decode(r *http.Request, val interface{}) error {
 	return Validate(val, NewErrBadRequestResponse)
 }
 
+// Validate checks the struct is valid based on gopkg.in/go-playground/validator.v9 validation tags.
 func Validate(val interface{}, errBuilder func(ErrorDetails) error) error {
 	if err := validate.Struct(val); err != nil {
 		verrors, ok := err.(validator.ValidationErrors)

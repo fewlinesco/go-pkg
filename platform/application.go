@@ -22,6 +22,7 @@ import (
 	"github.com/fewlinesco/go-pkg/platform/web"
 )
 
+// ApplicationConfig represents a minimal API configuration that can be override / augmented by the application
 type ApplicationConfig struct {
 	API             web.ServerConfig  `json:"api"`
 	Monitoring      web.ServerConfig  `json:"monitoring"`
@@ -30,11 +31,13 @@ type ApplicationConfig struct {
 	Eventing        eventing.Config   `json:"eventing"`
 }
 
+// ClassicalApplicationConfig represents a classical API configuration including a SQL Database and a broker that can be override / augmented by the application
 type ClassicalApplicationConfig struct {
 	ApplicationConfig
 	Database database.Config `json:"database"`
 }
 
+// Application represents a minimal API
 type Application struct {
 	HealthzHandler web.Handler
 	Logger         *log.Logger
@@ -43,12 +46,14 @@ type Application struct {
 	serverErrors   chan error
 }
 
+// ClassicalApplication represents a classical API including a SQL Database and a broker
 type ClassicalApplication struct {
 	Application
 	config   ClassicalApplicationConfig
 	Database *database.DB
 }
 
+// DefaultApplicationConfig are sane default configuration for any minimal application
 var DefaultApplicationConfig = ApplicationConfig{
 	API:             web.DefaultServerConfig,
 	Monitoring:      web.DefaultMonitoringConfig,
@@ -57,11 +62,13 @@ var DefaultApplicationConfig = ApplicationConfig{
 	Eventing:        eventing.DefaultConfig,
 }
 
+// DefaultClassicalApplicationConfig are sane default configuration for any classical application
 var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
 	ApplicationConfig: DefaultApplicationConfig,
 	Database:          database.DefaultConfig,
 }
 
+// DefaultClassicalApplicationMetricViews are defaults metrics generated for any classical application
 func DefaultClassicalApplicationMetricViews() []*metrics.View {
 	var views []*metrics.View
 
@@ -71,6 +78,7 @@ func DefaultClassicalApplicationMetricViews() []*metrics.View {
 	return views
 }
 
+// ReadConfiguration reads a file and unmarshal it to the given cfg struct
 func ReadConfiguration(filepath string, cfg interface{}) error {
 	cfgfile, err := os.Open(filepath)
 	if err != nil {
@@ -84,6 +92,7 @@ func ReadConfiguration(filepath string, cfg interface{}) error {
 	return nil
 }
 
+// NewClassicalApplication creates a classical application
 func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalApplication, error) {
 	db, err := database.Connect(config.Database)
 	if err != nil {
@@ -101,6 +110,7 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 	}, nil
 }
 
+// NewDBLessApplication creates a minimal application
 func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
 	return &Application{
 
@@ -111,12 +121,14 @@ func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
 	}, nil
 }
 
+// Start spawns the HTTP and Monitoring servers
 func (a *Application) Start(name string, arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker) error {
 	a.Router = router
 
 	return a.StartServers(name, serviceCheckers)
 }
 
+// Start spawns the HTTP and Monitoring servers or run migrations if the first argument is "migrate"
 func (c *ClassicalApplication) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
 	var command string
 
@@ -140,10 +152,12 @@ func (c *ClassicalApplication) Start(name string, arguments []string, router *we
 	}
 }
 
+// StartMigrations runs the migrations
 func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) error {
 	return database.Migrate(c.Database, migrations)
 }
 
+// StartServers spawns the HTTP and Monitoring server
 func (a *Application) StartServers(name string, serviceCheckers []web.HealthzChecker) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
