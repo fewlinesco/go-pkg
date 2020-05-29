@@ -7,6 +7,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// ErrorsMiddleware is in charge of sending the JSON response to the client in case of business errors
 func ErrorsMiddleware() Middleware {
 	return func(before Handler) Handler {
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {

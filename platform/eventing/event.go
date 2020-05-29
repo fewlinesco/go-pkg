@@ -24,9 +24,9 @@ type eventStatus string
 // Possible event status
 const (
 	EventStatusQueued    eventStatus = "queued"
-	EventStatusScheduled             = "scheduled"
-	EventStatusFailed                = "failed"
-	EventStatusProcessed             = "processed"
+	EventStatusScheduled eventStatus = "scheduled"
+	EventStatusFailed    eventStatus = "failed"
+	EventStatusProcessed eventStatus = "processed"
 )
 
 // Event stores all the information required in order to dispatch an event to the Broker

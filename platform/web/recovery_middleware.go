@@ -9,6 +9,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// RecoveryMiddleware recovers panic errors to send a classical 500. It also sends the error to Sentry
 func RecoveryMiddleware() Middleware {
 	return func(before Handler) Handler {
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {

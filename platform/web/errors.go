@@ -4,17 +4,25 @@ import (
 	"net/http"
 )
 
+// ErrorMessage represents a web error message as we want to make them consistent across all the API
 type ErrorMessage struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
+// NewErrorMessage is a builder function
 func NewErrorMessage(code int, message string) ErrorMessage {
 	return ErrorMessage{Code: code, Message: message}
 }
 
+// ErrorDetails defines a list of key-value object representing the error details.
+// It can be used like this:
+// ErrorDetails{"name" => "name is required"}
 type ErrorDetails map[string]string
 
+// Error represents a JSON response to send back to the user.
+// The applications handlers need to return either nil or wrap one web.Error if they want to return
+// JSON errors to the clients
 type Error struct {
 	ErrorMessage
 	HTTPCode int          `json:"-"`
@@ -31,6 +39,7 @@ var (
 	badRequestMessage = NewErrorMessage(400001, "Bad request")
 )
 
+// NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
 func NewErrUnmanagedResponse(traceid string) error {
 	return &Error{
 		HTTPCode:     http.StatusInternalServerError,
@@ -38,6 +47,7 @@ func NewErrUnmanagedResponse(traceid string) error {
 	}
 }
 
+// NewErrBadRequestResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
 func NewErrBadRequestResponse(details ErrorDetails) error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
@@ -46,6 +56,7 @@ func NewErrBadRequestResponse(details ErrorDetails) error {
 	}
 }
 
+// NewErrNotFoundResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
 func NewErrNotFoundResponse() error {
 	return &Error{
 		HTTPCode:     http.StatusNotFound,

@@ -21,7 +21,7 @@ func RecordElapsedTimeInMilliseconds(ctx context.Context, measure *Float64Measur
 
 	cb()
 
-	Record(ctx, measure.Measure(float64(time.Now().Sub(start).Milliseconds())))
+	Record(ctx, measure.Measure(float64(time.Since(start).Milliseconds())))
 }
 
 // Record saves a specific measurement to the current context

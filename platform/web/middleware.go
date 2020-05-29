@@ -4,6 +4,7 @@ import (
 	"log"
 )
 
+// Middleware is the type applications needs to conform to in order to define valid middlewares
 type Middleware func(Handler) Handler
 
 func wrapMiddleware(middlewares []Middleware, handler Handler) Handler {
@@ -17,6 +18,7 @@ func wrapMiddleware(middlewares []Middleware, handler Handler) Handler {
 	return handler
 }
 
+// DefaultMiddlewares contains the minimum middlewares every server should define for all its endpoints
 func DefaultMiddlewares(logger *log.Logger) []Middleware {
 	return []Middleware{
 		RecoveryMiddleware(),

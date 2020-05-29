@@ -1,6 +1,6 @@
 module github.com/fewlinesco/go-pkg
 
-go 1.13
+go 1.14
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.0
@@ -21,5 +21,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opencensus.io v0.22.3
 	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6 // indirect
+	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	gopkg.in/go-playground/validator.v9 v9.31.0
+	honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc
 )

@@ -5,6 +5,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// Config represents the JSON config applications can define in order to configure tracing
 type Config struct {
 	LocalEndpoint string  `json:"local_endpoint"`
 	ReporterURI   string  `json:"reporter_uri"`
@@ -12,6 +13,7 @@ type Config struct {
 	Probability   float64 `json:"probability"`
 }
 
+// DefaultConfig are the sane defaults all applications should use
 var DefaultConfig = Config{
 	LocalEndpoint: "0.0.0.0:8080",
 	ReporterURI:   "http://localhost:14268/api/traces",
@@ -19,6 +21,7 @@ var DefaultConfig = Config{
 	Probability:   0.05,
 }
 
+// Start configures and registers a new tracing exporter
 func Start(cfg Config) error {
 	exporter, err := jaeger.NewExporter(jaeger.Options{
 		CollectorEndpoint: cfg.ReporterURI,
