@@ -95,7 +95,6 @@ func startReceiver(ctx context.Context, listener *Listener, subject string) erro
 		natsConsumer.Close(ctx)
 	}(ctx)
 
-	// do we need to keep a timeframe?
 	for i := 0; i < listener.maxNumberOfRetries; i++ {
 		select {
 		case <-ctx.Done():
