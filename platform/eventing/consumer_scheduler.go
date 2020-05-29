@@ -26,7 +26,7 @@ type ConsumerScheduler struct {
 	stopped    chan bool
 }
 
-var NoMatchingHandlerError = errors.New("no handler matching this event")
+var ErrNoMatchingHandler = errors.New("no handler matching this event")
 
 // Shutdown gracefully stop the event consumer
 func (c *ConsumerScheduler) Shutdown() {
@@ -75,7 +75,7 @@ func (c *ConsumerScheduler) Start() error {
 
 						handler, ok := c.Handlers[ev.EventType]
 						if !ok {
-							err := fmt.Errorf("no handler matching this event: %v", NoMatchingHandlerError)
+							err := fmt.Errorf("no handler matching this event: %v", ErrNoMatchingHandler)
 							log(ev.ID, err.Error())
 							if _, err := MarkConsumerEventAsDiscarded(ctx, c.DB, ev); err != nil {
 								log(ev.ID, fmt.Sprintf("could not mark consumer event as failed: %v", err))
