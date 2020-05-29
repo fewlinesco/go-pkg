@@ -91,10 +91,8 @@ func startReceiver(ctx context.Context, listener *Listener, subject string) erro
 	}
 
 	go func(ctx context.Context) {
-		select {
-		case <-ctx.Done():
-			natsConsumer.Close(ctx)
-		}
+		<-ctx.Done()
+		natsConsumer.Close(ctx)
 	}(ctx)
 
 	// do we need to keep a timeframe?
