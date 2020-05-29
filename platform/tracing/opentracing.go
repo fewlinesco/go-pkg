@@ -53,3 +53,9 @@ func AddAttribute(span *trace.Span, key string, value string) {
 
 	span.AddAttributes(attribute)
 }
+
+// AddAttributeWithDisclosedData adds a string attribute to a span without concealing it's value
+func AddAttributeWithDisclosedData(span *trace.Span, key string, value string) {
+	attribute := trace.StringAttribute(key, value)
+	span.AddAttributes(attribute)
+}
