@@ -26,6 +26,7 @@ type ConsumerScheduler struct {
 	stopped    chan bool
 }
 
+// ErrNoMatchingHandler is an error indicating no handler was registerd for the consumed event
 var ErrNoMatchingHandler = errors.New("no handler matching this event")
 
 // Shutdown gracefully stop the event consumer

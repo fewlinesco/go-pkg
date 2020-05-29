@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	// ErrConsumerEventCanNotBePersisted is an error indicatin that an incoming event could not be persisted in the database
 	ErrConsumerEventCanNotBePersisted = errors.New("the event could not be persisted in the database")
 )
 
@@ -45,6 +46,7 @@ func NewListener(URL string, subjects []string, db *database.DB, logger *log.Log
 	}
 }
 
+// Stop is a function which can schedule all the listeners to stop
 func (listener *Listener) Stop() {
 	listener.stop <- true
 }
