@@ -36,7 +36,7 @@ func NewNatsConsumer(URL string, identifier string, db *database.DB, logger *log
 		DispatchTimeout: 400 * time.Millisecond,
 		BatchSize:       150,
 
-		Handlers:   make(map[string]Handler, 0),
+		Handlers:   make(map[string]Handler),
 		Identifier: identifier,
 		DB:         db,
 		Logger:     logger,

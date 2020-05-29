@@ -41,7 +41,7 @@ func NewListener(URL string, subjects []string, db *database.DB, logger *log.Log
 		db:       db,
 		logger:   logger,
 
-		stop:               make(chan bool, 0),
+		stop:               make(chan bool),
 		maxNumberOfRetries: 5,
 	}
 }
@@ -54,7 +54,7 @@ func (listener *Listener) Stop() {
 // Start starts a listener for the provided subjects
 // It will save all events for the subjects in the DB
 func (listener *Listener) Start() error {
-	shutdown := make(chan error, 0)
+	shutdown := make(chan error)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for _, subject := range listener.subjects {
