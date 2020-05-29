@@ -41,7 +41,7 @@ func Start(cfg Config) error {
 }
 
 // AddAttribute can add a string attribute to the provided span
-// Every value which is not an empty string will be changed to "[REDACTED]""
+// Every value which is not an empty string will be changed to "[REDACTED]"
 // This masks the actual value but indicates a certain key does have a value
 // Empty values will be represented by ""
 func AddAttribute(span *trace.Span, key string, value string) {
