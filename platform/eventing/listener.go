@@ -12,6 +12,7 @@ import (
 	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
+	"github.com/fewlinesco/go-pkg/platform/tracing"
 	"go.opencensus.io/trace"
 )
 
@@ -115,6 +116,9 @@ func receiverHandler(db *database.DB) func(context.Context, event.Event) protoco
 	return func(ctx context.Context, ev event.Event) protocol.Result {
 		ctx, span := trace.StartSpan(ctx, "eventing.EventReceived")
 		defer span.End()
+
+		tracing.AddAttributeWithDisclosedData(span, "event.subject", ev.Subject())
+		tracing.AddAttributeWithDisclosedData(span, "event.type", ev.Type())
 
 		if _, err := CreateConsumerEvent(ctx, db, ev.Subject(), ev.Type(), ev.DataSchema(), ev.Data()); err != nil {
 			errorAttribute := trace.StringAttribute("error", err.Error())
