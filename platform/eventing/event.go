@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"
+	nats "github.com/nats-io/nats.go"
 
 	"github.com/fewlinesco/go-pkg/platform/database"
 )
@@ -19,6 +20,16 @@ var (
 	ErrNoEventsToSchedule = errors.New("no events to schedule")
 )
 
+// Config defines the properties needed to publish and consume events
+type Config struct {
+	URL string `json:"url"`
+}
+
+// DefaultConfig defines the default properties for publishing and consuming events
+var DefaultConfig = Config{
+	URL: nats.DefaultURL,
+}
+
 type eventStatus string
 
 // Possible event status
@@ -27,6 +38,7 @@ const (
 	EventStatusScheduled eventStatus = "scheduled"
 	EventStatusFailed    eventStatus = "failed"
 	EventStatusProcessed eventStatus = "processed"
+	EventStatusDiscarded eventStatus = "discarded"
 )
 
 // Event stores all the information required in order to dispatch an event to the Broker
@@ -84,23 +96,18 @@ func CreatePublisherEvent(ctx context.Context, tx *database.Tx, subject string, 
 // eventtype: is the name of the event (e.g `application.created`)
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
-func CreateConsumerEvent(ctx context.Context, tx *database.Tx, subject string, eventtype string, dataschema string, data interface{}) (Event, error) {
-	rawdata, err := json.Marshal(data)
-	if err != nil {
-		return Event{}, fmt.Errorf("can't marshal event: %w", err)
-	}
-
+func CreateConsumerEvent(ctx context.Context, db *database.DB, subject string, eventtype string, dataschema string, data []byte) (Event, error) {
 	ev := Event{
 		ID:           uuid.New().String(),
 		Status:       EventStatusQueued,
 		Subject:      subject,
 		DataSchema:   dataschema,
 		EventType:    eventtype,
-		Data:         types.JSONText(rawdata),
+		Data:         types.JSONText(data),
 		DispatchedAt: time.Now(),
 	}
 
-	_, err = tx.NamedExecContext(ctx, `
+	_, err := db.NamedExecContext(ctx, `
 		INSERT INTO consumer_events
 		(id, status, subject, event_type, dataschema, data, dispatched_at)
 		VALUES
@@ -208,7 +215,7 @@ func MarkPublisherEventAsFailed(ctx context.Context, db *database.DB, ev Event, 
 
 // ReenqueWorkerPublisherEvents changes all event status to make them ready to be picked-up again
 func ReenqueWorkerPublisherEvents(ctx context.Context, db *database.DB, workerName string) error {
-	if _, err := db.ExecContext(ctx, "UPDATE publisher_events SET status = $1 WHERE worker = $2", EventStatusQueued, workerName); err != nil {
+	if _, err := db.ExecContext(ctx, "UPDATE publisher_events SET status = $1 WHERE worker = $2 AND status != 'processed'", EventStatusQueued, workerName); err != nil {
 		return fmt.Errorf("can't re-enqueue worker's publisher events: %v", err)
 	}
 
@@ -267,6 +274,20 @@ func MarkConsumedEventAsProcessed(ctx context.Context, db *database.DB, ev Event
 
 	if _, err := db.NamedExecContext(ctx, "UPDATE consumer_events SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
 		return ev, fmt.Errorf("can't update: %v", err)
+	}
+
+	return ev, nil
+}
+
+// MarkConsumerEventAsDiscarded will mark a consumer event as discarded
+// This is the case if a certain event type does not have a handler registered for it
+func MarkConsumerEventAsDiscarded(ctx context.Context, db *database.DB, ev Event) (Event, error) {
+	ev.Status = EventStatusDiscarded
+	now := time.Now()
+	ev.FinishedAt = &now
+
+	if _, err := db.NamedExecContext(ctx, "UPDATE consumer_events SET status = :status, finished_at = :finished_at WHERE id = :id", ev); err != nil {
+		return ev, fmt.Errorf("can't mark event as discarded: %v", err)
 	}
 
 	return ev, nil

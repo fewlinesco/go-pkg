@@ -122,7 +122,7 @@ func (db *DB) SelectContext(ctx context.Context, dest interface{}, statement str
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = db.db.SelectContext(ctx, dest, statement, args)
+		err = db.db.SelectContext(ctx, dest, statement, args...)
 	})
 
 	metrics.RecordError(ctx, metricQueryErrorTotal, err)
