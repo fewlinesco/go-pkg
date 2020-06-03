@@ -1,9 +1,14 @@
 package tracing
 
 import (
+	"context"
+
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/trace"
 )
+
+// Span represents an individual unit of work in the system
+type Span trace.Span
 
 // Config represents the JSON config applications can define in order to configure tracing
 type Config struct {
@@ -61,4 +66,14 @@ func AddAttribute(span *trace.Span, key string, value string) {
 func AddAttributeWithDisclosedData(span *trace.Span, key string, value string) {
 	attribute := trace.StringAttribute(key, value)
 	span.AddAttributes(attribute)
+}
+
+// StartSpan creates a new span with the provided name
+func StartSpan(ctx context.Context, name string) (context.Context, *trace.Span) {
+	return trace.StartSpan(ctx, name)
+}
+
+// EndSpan ends the provided running span
+func EndSpan(span *trace.Span) {
+	span.End()
 }
