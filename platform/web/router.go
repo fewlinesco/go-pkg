@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"syscall"
@@ -14,6 +13,7 @@ import (
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
 
+	"github.com/fewlinesco/go-pkg/platform/logging"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 )
 
@@ -47,7 +47,7 @@ func WrapNetHTTPHandler(name string, h http.Handler) Handler {
 }
 
 // NewRouter creates a new Router with a list of default middlewares that will be applied to all routes
-func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
+func NewRouter(logger *logging.Logger, middlewares []Middleware) *Router {
 	app := Router{
 		Router:      mux.NewRouter(),
 		logger:      logger,
@@ -72,7 +72,7 @@ func NewRouter(logger *log.Logger, middlewares []Middleware) *Router {
 // Router represents the application routes
 type Router struct {
 	*mux.Router
-	logger      *log.Logger
+	logger      *logging.Logger
 	middlewares []Middleware
 	och         *ochttp.Handler
 	shutdown    chan os.Signal

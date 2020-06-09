@@ -20,6 +20,7 @@ require (
 	github.com/lib/pq v1.3.0
 	github.com/pkg/errors v0.9.1 // indirect
 	go.opencensus.io v0.22.3
+	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6 // indirect
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422
 	gopkg.in/go-playground/validator.v9 v9.31.0

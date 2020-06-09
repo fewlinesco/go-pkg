@@ -3,10 +3,11 @@ package web
 import (
 	"context"
 	_ "expvar" // Register the expvar handlers
-	"log"
 	"net/http"
 	_ "net/http/pprof" // Register the pprof handlers
 	"time"
+
+	"github.com/fewlinesco/go-pkg/platform/logging"
 )
 
 // ServerConfig defines how to configure an HTTP server
@@ -46,7 +47,7 @@ func NewServer(config ServerConfig, router http.Handler) *http.Server {
 }
 
 // NewMonitoringServer creates a new monitoring server configured for metrics and healthz
-func NewMonitoringServer(config ServerConfig, logger *log.Logger, metricsHandler Handler, serviceCheckers []HealthzChecker) *http.Server {
+func NewMonitoringServer(config ServerConfig, logger *logging.Logger, metricsHandler Handler, serviceCheckers []HealthzChecker) *http.Server {
 	router := NewRouter(logger, DefaultMiddlewares(logger))
 
 	router.HandleFunc("GET", "/metrics", metricsHandler)

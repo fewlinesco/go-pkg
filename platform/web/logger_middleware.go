@@ -3,11 +3,11 @@ package web
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/fewlinesco/go-pkg/platform/logging"
 	"github.com/fewlinesco/go-pkg/platform/metrics"
 
 	"go.opencensus.io/trace"
@@ -38,7 +38,7 @@ var (
 )
 
 // LoggerMiddleware is in charge of logging each requests with their duration and some other useful data.
-func LoggerMiddleware(log *log.Logger) Middleware {
+func LoggerMiddleware(log *logging.Logger) Middleware {
 	return func(before Handler) Handler {
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
 			ctx, span := trace.StartSpan(ctx, "internal.web.Logger")
@@ -64,10 +64,11 @@ func LoggerMiddleware(log *log.Logger) Middleware {
 			metrics.RecordWithTags(ctx, tags, metricLatencyMs.Measure(float64(elapsedTime.Milliseconds())))
 			metrics.RecordWithTags(ctx, tags, metricRequestTotal.Measure(1))
 
-			log.Printf(`method="%s" path="%s" traceid="%s" statuscode="%d" duration="%s" remoteaddr="%s" message="%s"`,
-				r.Method, r.URL.Path,
-				v.TraceID, statuscode,
-				elapsedTime, r.RemoteAddr,
+			log.PrintRequestResponse(
+				logging.RequestAttribute(r.Method, r.URL.Path, statuscode),
+				logging.TraceAttribute(v.TraceID),
+				logging.DurationAttribute(elapsedTime),
+				logging.RemoteAddressAttribute(r.RemoteAddr),
 				message,
 			)
 
