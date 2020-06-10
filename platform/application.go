@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -40,7 +39,7 @@ type ClassicalApplicationConfig struct {
 // Application represents a minimal API
 type Application struct {
 	HealthzHandler web.Handler
-	Logger         *log.Logger
+	Logger         *logging.Logger
 	Router         *web.Router
 	config         ApplicationConfig
 	serverErrors   chan error
@@ -99,12 +98,17 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 		return nil, err
 	}
 
+	logger, err := logging.NewDefaultLogger()
+	if err != nil {
+		return nil, err
+	}
+
 	return &ClassicalApplication{
 		Database: db,
 		config:   config,
 		Application: Application{
 			config:       config.ApplicationConfig,
-			Logger:       logging.NewDefaultLogger(),
+			Logger:       logger,
 			serverErrors: make(chan error, 2),
 		},
 	}, nil
@@ -112,9 +116,13 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 
 // NewDBLessApplication creates a minimal application
 func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
-	return &Application{
+	logger, err := logging.NewDefaultLogger()
+	if err != nil {
+		return nil, err
+	}
 
-		Logger: logging.NewDefaultLogger(),
+	return &Application{
+		Logger: logger,
 
 		config:       config,
 		serverErrors: make(chan error, 2),
@@ -122,8 +130,12 @@ func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
 }
 
 // Start spawns the HTTP and Monitoring servers
-func (a *Application) Start(name string, arguments []string, router *web.Router, serviceCheckers []web.HealthzChecker) error {
+func (a *Application) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, serviceCheckers []web.HealthzChecker) error {
 	a.Router = router
+
+	if err := metrics.RegisterViews(metricViews...); err != nil {
+		return err
+	}
 
 	return a.StartServers(name, serviceCheckers)
 }
@@ -137,10 +149,6 @@ func (c *ClassicalApplication) Start(name string, arguments []string, router *we
 		arguments = arguments[1:]
 	}
 
-	if err := metrics.RegisterViews(metricViews...); err != nil {
-		return err
-	}
-
 	defaultServiceCheckers := []web.HealthzChecker{database.HealthCheck(c.Database)}
 	serviceCheckers = append(defaultServiceCheckers, serviceCheckers...)
 
@@ -148,7 +156,7 @@ func (c *ClassicalApplication) Start(name string, arguments []string, router *we
 	case "migrate":
 		return c.StartMigrations(migrations)
 	default:
-		return c.Application.Start(name, arguments, router, serviceCheckers)
+		return c.Application.Start(name, arguments, router, metricViews, serviceCheckers)
 	}
 }
 
@@ -161,6 +169,8 @@ func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) er
 func (a *Application) StartServers(name string, serviceCheckers []web.HealthzChecker) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	defer a.Logger.Sync()
 
 	a.Logger.Println("start tracing endpoint")
 	if err := tracing.Start(a.config.Tracing); err != nil {

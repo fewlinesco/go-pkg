@@ -1,7 +1,7 @@
 package web
 
 import (
-	"log"
+	"github.com/fewlinesco/go-pkg/platform/logging"
 )
 
 // Middleware is the type applications needs to conform to in order to define valid middlewares
@@ -19,7 +19,7 @@ func wrapMiddleware(middlewares []Middleware, handler Handler) Handler {
 }
 
 // DefaultMiddlewares contains the minimum middlewares every server should define for all its endpoints
-func DefaultMiddlewares(logger *log.Logger) []Middleware {
+func DefaultMiddlewares(logger *logging.Logger) []Middleware {
 	return []Middleware{
 		RecoveryMiddleware(),
 		ErrorsMiddleware(),
