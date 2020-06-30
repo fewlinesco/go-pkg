@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 
+	cloudeventsnats "github.com/cloudevents/sdk-go/protocol/nats/v2"
 	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/cloudevents/sdk-go/v2/protocol"
-	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
 	"github.com/fewlinesco/go-pkg/platform/database"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
 	"github.com/fewlinesco/go-pkg/platform/tracing"
