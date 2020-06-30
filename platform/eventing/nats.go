@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
+	cloudeventsnats "github.com/cloudevents/sdk-go/protocol/nats/v2"
 	"github.com/cloudevents/sdk-go/v2/client"
-	cloudeventsnats "github.com/cloudevents/sdk-go/v2/protocol/nats"
 	"github.com/fewlinesco/go-pkg/platform/database"
 )
 
