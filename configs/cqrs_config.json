@@ -1,0 +1,14 @@
+{
+    "read_database": {
+        "username": "reader_user",
+        "password": "reader_user",
+        "options": {
+            "sslmode": "disable"
+        }
+    },
+    "write_database": {
+        "options": {
+            "sslmode": "disable"
+        }
+    }
+}

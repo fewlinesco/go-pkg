@@ -101,6 +101,16 @@ func IsUniqueConstraintError(err error, constraintName string) bool {
 	return e.Code == "23505" && e.Constraint == constraintName
 }
 
+// IsInsuficientPrivilegeError is a helper checking the current database error and returning true if it's a PG insuficient privilege error
+func IsInsuficientPrivilegeError(err error) bool {
+	e, ok := err.(*pq.Error)
+	if !ok {
+		return false
+	}
+
+	return e.Code == "42501"
+}
+
 // GetCurrentTimestamp is a helper function that generates a new UTC timestamp truncated at the millisecond
 // because PG is not able to handle nanoseconds
 func GetCurrentTimestamp() time.Time {
