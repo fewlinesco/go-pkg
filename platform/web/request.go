@@ -1,15 +1,19 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 
 	en "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
+	"github.com/xeipuuv/gojsonschema"
 	validator "gopkg.in/go-playground/validator.v9"
 	en_translations "gopkg.in/go-playground/validator.v9/translations/en"
 )
@@ -63,6 +67,43 @@ func Decode(r *http.Request, val interface{}) error {
 	}
 
 	return Validate(val, NewErrBadRequestResponse)
+}
+
+// DecodeWithJSONSchema takes the path to a json schema and a http request
+// And returns an error when the request's payload does not match the JSON schema
+func DecodeWithJSONSchema(request *http.Request, model interface{}, path string) error {
+	body, _ := ioutil.ReadAll(request.Body)
+
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("%w: %v", NewErrBadRequestResponse(nil), err)
+	}
+
+	jsonSchema := gojsonschema.NewReferenceLoader("file://" + absolutePath)
+	payload := gojsonschema.NewBytesLoader(body)
+
+	result, err := gojsonschema.Validate(jsonSchema, payload)
+	if err != nil {
+		return fmt.Errorf("%w: %v", NewErrBadRequestResponse(nil), err)
+	}
+
+	if !result.Valid() {
+		errorDetails := make(ErrorDetails)
+
+		for _, desc := range result.Errors() {
+			errorDetails[desc.Field()] = desc.Description()
+		}
+
+		return fmt.Errorf("%w", newErrInvalidRequest(errorDetails))
+	}
+
+	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+	if err := Decode(request, &model); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Validate checks the struct is valid based on gopkg.in/go-playground/validator.v9 validation tags.

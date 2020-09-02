@@ -39,6 +39,7 @@ var (
 	badRequestMessage         = NewErrorMessage(400001, "Bad request")
 	unmarshallableJSONMessage = NewErrorMessage(400002, "the body must be a valid JSON")
 	missingBodyMessage        = NewErrorMessage(400003, "the body is empty")
+	invalidRequestMessage     = NewErrorMessage(0000000, "one ore more of the input parameters was incorrect")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
@@ -79,5 +80,15 @@ func newErrMissingRequestBody() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
 		ErrorMessage: missingBodyMessage,
+	}
+}
+
+// newErrInvalidRequest is returned when the request payload is ill-formed
+// and can't be validated using the JSON schema
+func newErrInvalidRequest(errorDetails ErrorDetails) error {
+	return &Error{
+		ErrorMessage: invalidRequestMessage,
+		HTTPCode:     http.StatusBadRequest,
+		Details:      errorDetails,
 	}
 }
