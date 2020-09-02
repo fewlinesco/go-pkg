@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 
 	en "github.com/go-playground/locales/en"
@@ -15,6 +16,7 @@ import (
 
 var validate = validator.New()
 var translator *ut.UniversalTranslator
+var fieldRegex = regexp.MustCompile(`json: unknown field "([^"]+)"`)
 
 func init() {
 	enLocale := en.New()
@@ -35,7 +37,29 @@ func Decode(r *http.Request, val interface{}) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(val); err != nil {
-		return fmt.Errorf("%w", NewErrBadRequestResponse(nil))
+		switch e := err.(type) {
+		case *json.UnmarshalTypeError:
+			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
+				e.Field: fmt.Sprintf("%s must be a %s", e.Field, e.Type.String()),
+			}))
+		case *json.SyntaxError:
+			return fmt.Errorf("%v: %w", err, newErrUnmarshallableJSON())
+		}
+
+		if err.Error() == "EOF" {
+			return fmt.Errorf("%v: %w", err, newErrMissingRequestBody())
+		}
+
+		if strings.Contains(err.Error(), "json: unknown field") {
+			matches := fieldRegex.FindStringSubmatch(err.Error())
+			fieldName := matches[1]
+
+			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
+				fieldName: fmt.Sprintf("%s field is not allowed", fieldName),
+			}))
+		}
+
+		return fmt.Errorf("%T, %v: %w", err, err, newErrUnmarshallableJSON())
 	}
 
 	return Validate(val, NewErrBadRequestResponse)

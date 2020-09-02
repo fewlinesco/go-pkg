@@ -34,9 +34,11 @@ func (e *Error) Error() string {
 }
 
 var (
-	unmanagedMessage  = NewErrorMessage(500000, "Unmanaged error")
-	notFoundMessage   = NewErrorMessage(400000, "Endpoint not found")
-	badRequestMessage = NewErrorMessage(400001, "Bad request")
+	unmanagedMessage          = NewErrorMessage(500000, "Unmanaged error")
+	notFoundMessage           = NewErrorMessage(400000, "Endpoint not found")
+	badRequestMessage         = NewErrorMessage(400001, "Bad request")
+	unmarshallableJSONMessage = NewErrorMessage(400002, "the body must be a valid JSON")
+	missingBodyMessage        = NewErrorMessage(400003, "the body is empty")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
@@ -61,5 +63,21 @@ func NewErrNotFoundResponse() error {
 	return &Error{
 		HTTPCode:     http.StatusNotFound,
 		ErrorMessage: notFoundMessage,
+	}
+}
+
+// newErrUnmarshallableJSON is returned if we are unable to unmarshal the request body to a struct
+func newErrUnmarshallableJSON() error {
+	return &Error{
+		HTTPCode:     http.StatusBadRequest,
+		ErrorMessage: unmarshallableJSONMessage,
+	}
+}
+
+// newErrMissingRequestBodu is returned when there is no body present in the request
+func newErrMissingRequestBody() error {
+	return &Error{
+		HTTPCode:     http.StatusBadRequest,
+		ErrorMessage: missingBodyMessage,
 	}
 }
