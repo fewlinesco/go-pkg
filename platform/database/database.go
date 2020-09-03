@@ -28,7 +28,7 @@ type Config struct {
 
 // DefaultConfig are the default values for any application
 var DefaultConfig = Config{
-	URL:      "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
+	URL:      "postgres://postgres:postgres@localhost:5432/postgres",
 	Driver:   "postgres",
 	Scheme:   "postgresql",
 	Host:     "localhost",
