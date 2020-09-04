@@ -13,7 +13,7 @@ import (
 	"github.com/lib/pq"
 )
 
-// Config represents the database configuration that can be defined / override by the application
+// Config represents the database configuration that can be defined / overridden by the application.
 type Config struct {
 	URL      string            `json:"url"`
 	Driver   string            `json:"driver"`
@@ -28,7 +28,6 @@ type Config struct {
 
 // DefaultConfig are the default values for any application
 var DefaultConfig = Config{
-	URL:      "postgres://postgres:postgres@localhost:5432/postgres",
 	Driver:   "postgres",
 	Scheme:   "postgresql",
 	Host:     "localhost",
