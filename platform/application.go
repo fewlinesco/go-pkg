@@ -140,13 +140,13 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 func NewCQRSApplication(config CQRSApplicationConfig) (*CQRSApplication, error) {
 	readDb, err := database.Connect(config.ReadDatabase)
 	if err != nil {
-		err = fmt.Errorf("Could not open Read Database connection: %v", err)
+		err = fmt.Errorf("could not open Read Database connection: %v", err)
 		return nil, err
 	}
 
 	writeDb, err := database.Connect(config.WriteDatabase)
 	if err != nil {
-		err = fmt.Errorf("Could not open Write Database connection: %v", err)
+		err = fmt.Errorf("could not open Write Database connection: %v", err)
 		return nil, err
 	}
 
