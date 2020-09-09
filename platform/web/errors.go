@@ -39,7 +39,8 @@ var (
 	badRequestMessage         = NewErrorMessage(400001, "Bad request")
 	unmarshallableJSONMessage = NewErrorMessage(400002, "the body must be a valid JSON")
 	missingBodyMessage        = NewErrorMessage(400003, "the body is empty")
-	invalidRequestMessage     = NewErrorMessage(0000000, "one ore more of the input parameters was incorrect")
+	invalidRequestMessage     = NewErrorMessage(100001, "one ore more of the input parameters was incorrect")
+	invalidJSONSchemaFilePath = NewErrorMessage(100005, "the provided file path for the json schema is invalid")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
@@ -90,5 +91,14 @@ func newErrInvalidRequest(errorDetails ErrorDetails) error {
 		ErrorMessage: invalidRequestMessage,
 		HTTPCode:     http.StatusBadRequest,
 		Details:      errorDetails,
+	}
+}
+
+// newErrInvalidJSONSchemaFilePath is returned when the file path provided
+// to the DecodeWithJSONSchema function contains an error
+func newErrInvalidJSONSchemaFilePath() error {
+	return &Error{
+		ErrorMessage: invalidJSONSchemaFilePath,
+		HTTPCode:     http.StatusInternalServerError,
 	}
 }
