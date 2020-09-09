@@ -76,7 +76,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, path string)
 
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
-		return fmt.Errorf("%w: %v", NewErrBadRequestResponse(nil), err)
+		return fmt.Errorf("%w: %v", newErrInvalidJSONSchemaFilePath(), err)
 	}
 
 	jsonSchema := gojsonschema.NewReferenceLoader("file://" + absolutePath)
