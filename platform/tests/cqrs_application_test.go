@@ -30,7 +30,7 @@ func TestCQRSApplication(t *testing.T) {
 
 	cqrsAppConfig := platform.DefaultCQRSApplicationConfig
 
-	err := platform.ReadConfiguration("../../../configs/cqrs_config.json", &cqrsAppConfig)
+	err := platform.ReadConfiguration("../../configs/cqrs_config.json", &cqrsAppConfig)
 	if err != nil {
 		t.Fatalf("Could not read the configuration: %v", err)
 	}
