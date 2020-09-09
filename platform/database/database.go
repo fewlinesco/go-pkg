@@ -13,8 +13,9 @@ import (
 	"github.com/lib/pq"
 )
 
-// Config represents the database configuration that can be defined / override by the application
+// Config represents the database configuration that can be defined / overridden by the application.
 type Config struct {
+	URL      string            `json:"url"`
 	Driver   string            `json:"driver"`
 	Scheme   string            `json:"scheme"`
 	Host     string            `json:"host"`
@@ -69,20 +70,22 @@ type Tx struct {
 
 // Connect configures the driver and opens a database connection
 func Connect(config Config) (*DB, error) {
-	options := make(url.Values)
-	for key, value := range config.Options {
-		options.Add(key, value)
-	}
+	if config.URL == "" {
+		options := make(url.Values)
+		for key, value := range config.Options {
+			options.Add(key, value)
+		}
 
-	connectionstring := url.URL{
-		Scheme:   config.Scheme,
-		User:     url.UserPassword(config.Username, config.Password),
-		Host:     fmt.Sprintf("%s:%d", config.Host, config.Port),
-		Path:     config.Database,
-		RawQuery: options.Encode(),
+		connectionURL := url.URL{
+			Scheme:   config.Scheme,
+			User:     url.UserPassword(config.Username, config.Password),
+			Host:     fmt.Sprintf("%s:%d", config.Host, config.Port),
+			Path:     config.Database,
+			RawQuery: options.Encode(),
+		}
+		config.URL = connectionURL.String()
 	}
-
-	db, err := sqlx.Connect(config.Driver, connectionstring.String())
+	db, err := sqlx.Connect(config.Driver, config.URL)
 	if err != nil {
 		return nil, fmt.Errorf("can't connect to database: %v", err)
 	}
