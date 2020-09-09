@@ -75,7 +75,7 @@ func newErrUnmarshallableJSON() error {
 	}
 }
 
-// newErrMissingRequestBodu is returned when there is no body present in the request
+// newErrMissingRequestBody is returned when there is no body present in the request
 func newErrMissingRequestBody() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
