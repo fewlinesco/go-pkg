@@ -1,59 +1,15 @@
-version: "2.1"
+version: '2.1'
 services:
-  loki:
-    image: grafana/loki:1.5.0
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-
-  mock-server:
-    image: nginx:1.17.8-alpine
-    volumes:
-      - ./oauth-mock-server:/usr/share/nginx/html/
-    ports:
-      - 8082:80
-
-  grafana:
-    image: grafana/grafana:master
-    volumes:
-      - ./grafana:/etc/grafana/provisioning/datasources
-    ports:
-      - "3000:3000"
-
-  jaeger:
-    image: jaegertracing/all-in-one:1.17.1
-    ports:
-      - "6831:6831/udp"
-      - "16686:16686"
-      - "14268:14268"
-
-  promtail:
-    image: grafana/promtail:1.5.0
-    volumes:
-      - ./logs:/var/log
-    command: -config.file=/etc/promtail/docker-config.yaml
-
-  prometheus:
-    image: prom/prometheus:v2.18.1
-    volumes:
-      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yaml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=365d'
-    ports:
-      - "9090:9090"
-
   postgres_main:
     image: postgres:11.8-alpine
     environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: "postgres"
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_DB: 'postgres'
     ports:
-      - "5432:5432"
+      - '29999:5432'
     healthcheck:
-      test: "pg_isready -U postgres"
+      test: 'pg_isready -U postgres'
       interval: 10s
       timeout: 5s
       retries: 5
