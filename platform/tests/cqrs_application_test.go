@@ -1,4 +1,4 @@
-package database_test
+package cqrs_application_test
 
 import (
 	"context"
