@@ -1,0 +1,17 @@
+version: '2.1'
+services:
+  postgres_main:
+    image: postgres:11.8-alpine
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_DB: 'postgres'
+    ports:
+      - '29999:5432'
+    healthcheck:
+      test: 'pg_isready -U postgres'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./dev/postgres_init:/docker-entrypoint-initdb.d
