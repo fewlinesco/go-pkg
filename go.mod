@@ -38,6 +38,7 @@ require (
 	github.com/prometheus/statsd_exporter v0.18.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opencensus.io v0.22.4
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect

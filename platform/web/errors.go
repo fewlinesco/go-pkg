@@ -34,9 +34,13 @@ func (e *Error) Error() string {
 }
 
 var (
-	unmanagedMessage  = NewErrorMessage(500000, "Unmanaged error")
-	notFoundMessage   = NewErrorMessage(400000, "Endpoint not found")
-	badRequestMessage = NewErrorMessage(400001, "Bad request")
+	unmanagedMessage          = NewErrorMessage(500000, "Unmanaged error")
+	notFoundMessage           = NewErrorMessage(400000, "Endpoint not found")
+	badRequestMessage         = NewErrorMessage(400001, "Bad request")
+	unmarshallableJSONMessage = NewErrorMessage(400002, "the body must be a valid JSON")
+	missingBodyMessage        = NewErrorMessage(400003, "the body is empty")
+	invalidRequestMessage     = NewErrorMessage(100001, "one ore more of the input parameters was incorrect")
+	invalidJSONSchemaFilePath = NewErrorMessage(100005, "the provided file path for the json schema is invalid")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
@@ -61,5 +65,40 @@ func NewErrNotFoundResponse() error {
 	return &Error{
 		HTTPCode:     http.StatusNotFound,
 		ErrorMessage: notFoundMessage,
+	}
+}
+
+// newErrUnmarshallableJSON is returned if we are unable to unmarshal the request body to a struct
+func newErrUnmarshallableJSON() error {
+	return &Error{
+		HTTPCode:     http.StatusBadRequest,
+		ErrorMessage: unmarshallableJSONMessage,
+	}
+}
+
+// newErrMissingRequestBody is returned when there is no body present in the request
+func newErrMissingRequestBody() error {
+	return &Error{
+		HTTPCode:     http.StatusBadRequest,
+		ErrorMessage: missingBodyMessage,
+	}
+}
+
+// newErrInvalidRequest is returned when the request payload is ill-formed
+// and can't be validated using the JSON schema
+func newErrInvalidRequest(errorDetails ErrorDetails) error {
+	return &Error{
+		ErrorMessage: invalidRequestMessage,
+		HTTPCode:     http.StatusBadRequest,
+		Details:      errorDetails,
+	}
+}
+
+// newErrInvalidJSONSchemaFilePath is returned when the file path provided
+// to the DecodeWithJSONSchema function contains an error
+func newErrInvalidJSONSchemaFilePath() error {
+	return &Error{
+		ErrorMessage: invalidJSONSchemaFilePath,
+		HTTPCode:     http.StatusInternalServerError,
 	}
 }
