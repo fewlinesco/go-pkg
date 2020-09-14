@@ -99,7 +99,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, path string)
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	if err := Decode(request, &model); err != nil {
+	if err := Decode(request, model); err != nil {
 		return err
 	}
 

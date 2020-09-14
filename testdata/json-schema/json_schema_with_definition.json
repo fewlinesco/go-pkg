@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://json-schema.org/draft-07/schema#",
+  "title": "A JSON schema with a custom definition ENUM type",
+  "type": "object",
+  "definitions": {
+    "datatypes": {
+      "$id": "data-type",
+      "type": "string",
+      "enum": ["string", "boolean", "localizedString", "integer", "number"]
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "code": {
+      "type": "integer"
+    },
+    "datatype": {
+      "$ref": "#/definitions/datatypes"
+    }
+  },
+  "required": ["code", "datatype"]
+}
