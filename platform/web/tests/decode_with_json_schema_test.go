@@ -1,4 +1,4 @@
-package web_tests
+package tests
 
 import (
 	"net/http"
