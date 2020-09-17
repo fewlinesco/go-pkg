@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
+	"path"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 
 	en "github.com/go-playground/locales/en"
@@ -71,15 +72,17 @@ func Decode(r *http.Request, val interface{}) error {
 
 // DecodeWithJSONSchema takes the path to a json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
-func DecodeWithJSONSchema(request *http.Request, model interface{}, path string) error {
+func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath string) error {
 	body, _ := ioutil.ReadAll(request.Body)
 
-	absolutePath, err := filepath.Abs(path)
-	if err != nil {
-		return fmt.Errorf("%w: %v", newErrInvalidJSONSchemaFilePath(), err)
+	_, rootFile, _, ok := runtime.Caller(1)
+	if !ok {
+		return fmt.Errorf("%w", newErrInvalidJSONSchemaFilePath())
 	}
 
-	jsonSchema := gojsonschema.NewReferenceLoader("file://" + absolutePath)
+	filePath = path.Join(path.Dir(rootFile), filePath)
+
+	jsonSchema := gojsonschema.NewReferenceLoader("file://" + filePath)
 	payload := gojsonschema.NewBytesLoader(body)
 
 	result, err := gojsonschema.Validate(jsonSchema, payload)
