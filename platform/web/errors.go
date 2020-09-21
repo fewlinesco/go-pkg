@@ -6,12 +6,12 @@ import (
 
 // ErrorMessage represents a web error message as we want to make them consistent across all the API
 type ErrorMessage struct {
-	Code    int    `json:"code"`
+	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
 // NewErrorMessage is a builder function
-func NewErrorMessage(code int, message string) ErrorMessage {
+func NewErrorMessage(code string, message string) ErrorMessage {
 	return ErrorMessage{Code: code, Message: message}
 }
 
@@ -34,13 +34,13 @@ func (e *Error) Error() string {
 }
 
 var (
-	unmanagedMessage          = NewErrorMessage(500000, "Unmanaged error")
-	notFoundMessage           = NewErrorMessage(400000, "Endpoint not found")
-	badRequestMessage         = NewErrorMessage(400001, "Bad request")
-	unmarshallableJSONMessage = NewErrorMessage(400002, "the body must be a valid JSON")
-	missingBodyMessage        = NewErrorMessage(400003, "the body is empty")
-	invalidRequestMessage     = NewErrorMessage(100001, "one ore more of the input parameters was incorrect")
-	invalidJSONSchemaFilePath = NewErrorMessage(100005, "the provided file path for the json schema is invalid")
+	unmanagedMessage          = NewErrorMessage("500000", "Unmanaged error")
+	notFoundMessage           = NewErrorMessage("400000", "Endpoint not found")
+	badRequestMessage         = NewErrorMessage("400001", "Bad request")
+	unmarshallableJSONMessage = NewErrorMessage("400002", "the body must be a valid JSON")
+	missingBodyMessage        = NewErrorMessage("400003", "the body is empty")
+	invalidRequestMessage     = NewErrorMessage("100001", "one ore more of the input parameters was incorrect")
+	invalidJSONSchemaFilePath = NewErrorMessage("100005", "the provided file path for the json schema is invalid")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
