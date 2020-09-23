@@ -34,20 +34,27 @@ func (e *Error) Error() string {
 }
 
 var (
-	unmanagedMessage          = NewErrorMessage("500000", "Unmanaged error")
-	notFoundMessage           = NewErrorMessage("400000", "Endpoint not found")
-	badRequestMessage         = NewErrorMessage("400001", "Bad request")
-	unmarshallableJSONMessage = NewErrorMessage("400002", "the body must be a valid JSON")
-	missingBodyMessage        = NewErrorMessage("400003", "the body is empty")
-	invalidRequestMessage     = NewErrorMessage("100001", "one ore more of the input parameters was incorrect")
-	invalidJSONSchemaFilePath = NewErrorMessage("100005", "the provided file path for the json schema is invalid")
+	// UnmanagedErrorMessage is the error message we return when an unexpected error took place
+	UnmanagedErrorMessage = NewErrorMessage("500000", "Unmanaged error")
+	// NotFoundMessage is the error message we return when a not found error took place
+	NotFoundMessage = NewErrorMessage("400000", "Endpoint not found")
+	// BadRequestMessage is the error message we return when we were unable to process the request
+	BadRequestMessage = NewErrorMessage("400001", "Bad request")
+	// UnmarshallableJSONMessage is the error message we return when an unexpected error took place
+	UnmarshallableJSONMessage = NewErrorMessage("400002", "the body must be a valid JSON")
+	// MissingBodyMessage is the error message we return when the request body is empty
+	MissingBodyMessage = NewErrorMessage("400003", "the body is empty")
+	// InvalidRequestBodyContentMessage is the error message we return when the request body contains one or more invalid input parameters
+	InvalidRequestBodyContentMessage = NewErrorMessage("100001", "one ore more of the input parameters was incorrect")
+	// InvalidJSONSchemaFilePath is the error message we return when we were unable to find a json schema at the specified path
+	InvalidJSONSchemaFilePath = NewErrorMessage("100005", "the provided file path for the json schema is invalid")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
 func NewErrUnmanagedResponse(traceid string) error {
 	return &Error{
 		HTTPCode:     http.StatusInternalServerError,
-		ErrorMessage: unmanagedMessage,
+		ErrorMessage: UnmanagedErrorMessage,
 	}
 }
 
@@ -55,7 +62,7 @@ func NewErrUnmanagedResponse(traceid string) error {
 func NewErrBadRequestResponse(details ErrorDetails) error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
-		ErrorMessage: badRequestMessage,
+		ErrorMessage: BadRequestMessage,
 		Details:      details,
 	}
 }
@@ -64,7 +71,7 @@ func NewErrBadRequestResponse(details ErrorDetails) error {
 func NewErrNotFoundResponse() error {
 	return &Error{
 		HTTPCode:     http.StatusNotFound,
-		ErrorMessage: notFoundMessage,
+		ErrorMessage: NotFoundMessage,
 	}
 }
 
@@ -72,7 +79,7 @@ func NewErrNotFoundResponse() error {
 func newErrUnmarshallableJSON() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
-		ErrorMessage: unmarshallableJSONMessage,
+		ErrorMessage: UnmarshallableJSONMessage,
 	}
 }
 
@@ -80,15 +87,15 @@ func newErrUnmarshallableJSON() error {
 func newErrMissingRequestBody() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
-		ErrorMessage: missingBodyMessage,
+		ErrorMessage: MissingBodyMessage,
 	}
 }
 
 // newErrInvalidRequest is returned when the request payload is ill-formed
 // and can't be validated using the JSON schema
-func newErrInvalidRequest(errorDetails ErrorDetails) error {
+func newErrInvalidRequestBodyContent(errorDetails ErrorDetails) error {
 	return &Error{
-		ErrorMessage: invalidRequestMessage,
+		ErrorMessage: InvalidRequestBodyContentMessage,
 		HTTPCode:     http.StatusBadRequest,
 		Details:      errorDetails,
 	}
@@ -98,7 +105,7 @@ func newErrInvalidRequest(errorDetails ErrorDetails) error {
 // to the DecodeWithJSONSchema function contains an error
 func newErrInvalidJSONSchemaFilePath() error {
 	return &Error{
-		ErrorMessage: invalidJSONSchemaFilePath,
+		ErrorMessage: InvalidJSONSchemaFilePath,
 		HTTPCode:     http.StatusInternalServerError,
 	}
 }

@@ -67,7 +67,7 @@ func Decode(r *http.Request, val interface{}) error {
 		return fmt.Errorf("%T, %v: %w", err, err, newErrUnmarshallableJSON())
 	}
 
-	return Validate(val, NewErrBadRequestResponse)
+	return Validate(val, newErrInvalidRequestBodyContent)
 }
 
 // DecodeWithJSONSchema takes the path to a json schema and a http request
@@ -97,7 +97,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 			errorDetails[desc.Field()] = desc.Description()
 		}
 
-		return fmt.Errorf("%w", newErrInvalidRequest(errorDetails))
+		return fmt.Errorf("%w", newErrInvalidRequestBodyContent(errorDetails))
 	}
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
