@@ -130,6 +130,11 @@ func (db *DB) Begin() (*Tx, error) {
 	return &Tx{tx: tx}, nil
 }
 
+// Close closes the connection to the database
+func (db *DB) Close() error {
+	return db.db.Close()
+}
+
 // SelectContext fetches a slice of elements from database.
 func (db *DB) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 	var err error
