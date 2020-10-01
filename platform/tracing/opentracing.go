@@ -68,6 +68,7 @@ func AddAttributeWithDisclosedData(span *trace.Span, key string, value string) {
 	span.AddAttributes(attribute)
 }
 
+// MarkAsError marks the given span as erroring and set the reason as a message field
 func MarkAsError(span *trace.Span, reason string) {
 	span.AddAttributes(
 		trace.BoolAttribute("error", true),
