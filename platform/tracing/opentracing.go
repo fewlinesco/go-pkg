@@ -68,6 +68,14 @@ func AddAttributeWithDisclosedData(span *trace.Span, key string, value string) {
 	span.AddAttributes(attribute)
 }
 
+// MarkAsError marks the given span as erroring and set the reason as a message field
+func MarkAsError(span *trace.Span, reason string) {
+	span.AddAttributes(
+		trace.BoolAttribute("error", true),
+		trace.StringAttribute("message", reason),
+	)
+}
+
 // StartSpan creates a new span with the provided name
 func StartSpan(ctx context.Context, name string) (context.Context, *trace.Span) {
 	return trace.StartSpan(ctx, name)
