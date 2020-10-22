@@ -275,6 +275,7 @@ func (a *Application) StartServers(name string, serviceCheckers []web.HealthzChe
 
 	defer func() {
 		if err := recover(); err != nil {
+			a.Logger.Printf("a panic has been recovered: %v", err)
 			sentry.CurrentHub().Recover(err)
 		}
 

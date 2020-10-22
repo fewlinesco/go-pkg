@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 // RecoveryMiddleware recovers panic errors to send a classical 500. It also sends the error to Sentry
 func RecoveryMiddleware() Middleware {
 	return func(before Handler) Handler {
-		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) (err error) {
 			ctx, span := trace.StartSpan(ctx, "internal.web.RecoveryMiddleware")
 
 			defer func() {
@@ -22,14 +23,12 @@ func RecoveryMiddleware() Middleware {
 					sentry.CurrentHub().Recover(err)
 					sentry.Flush(2 * time.Second)
 
-					_ = Respond(ctx, w, NewErrUnmanagedResponse(v.TraceID), http.StatusInternalServerError)
+					err = fmt.Errorf("a panic has been recovered: %w: %v ", NewErrUnmanagedResponse(v.TraceID), err)
 				}
 				span.End()
 			}()
 
-			_ = before(ctx, w, r, params)
-
-			return nil
+			return before(ctx, w, r, params)
 		}
 
 		return h
