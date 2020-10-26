@@ -2,7 +2,6 @@ package eventing
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx/types"
 )
 
+// EventStatus holds all the possible states for an event
 type EventStatus string
 
 // Possible event status
@@ -20,10 +20,6 @@ const (
 	EventStatusFailed    EventStatus = "failed"
 	EventStatusProcessed EventStatus = "processed"
 	EventStatusDiscarded EventStatus = "discarded"
-)
-
-var (
-	ErrEventAlreadyExists = errors.New("event is already in the database")
 )
 
 // Event stores all the information required in order to dispatch an event to the Broker
@@ -67,10 +63,6 @@ func CreatePublisherEvent(ctx context.Context, db *database.DB, subject string, 
 		VALUES
 		(:id, :status, :subject, :type, :source, :dataschema, :data, :dispatched_at)
 	`, ev)
-
-	if database.IsUniqueConstraintError(err, "publisher_events_pkey") {
-		return ev, ErrEventAlreadyExists
-	}
 
 	if err != nil {
 		return ev, fmt.Errorf("can't insert: %w", err)
