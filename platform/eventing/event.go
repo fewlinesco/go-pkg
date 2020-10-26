@@ -44,7 +44,7 @@ type Event struct {
 // source: name of the application that created the event
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
-func CreatePublisherEvent(ctx context.Context, db *database.DB, subject string, eventType string, source string, dataschema string, data types.JSONText) (Event, error) {
+func CreatePublisherEvent(ctx context.Context, tx *database.Tx, subject string, eventType string, source string, dataschema string, data types.JSONText) (Event, error) {
 
 	ev := Event{
 		ID:           uuid.New().String(),
@@ -57,7 +57,7 @@ func CreatePublisherEvent(ctx context.Context, db *database.DB, subject string, 
 		DispatchedAt: time.Now(),
 	}
 
-	_, err := db.NamedExecContext(ctx, `
+	_, err := tx.NamedExecContext(ctx, `
 		INSERT INTO publisher_events
 		(id, status, subject, type, source, dataschema, data, dispatched_at)
 		VALUES
