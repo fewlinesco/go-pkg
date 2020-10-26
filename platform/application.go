@@ -22,6 +22,7 @@ import (
 )
 
 // ApplicationConfig represents a minimal API configuration that can be override / augmented by the application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 type ApplicationConfig struct {
 	API             web.ServerConfig  `json:"api"`
 	Monitoring      web.ServerConfig  `json:"monitoring"`
@@ -31,12 +32,14 @@ type ApplicationConfig struct {
 }
 
 // ClassicalApplicationConfig represents a classical API configuration including a SQL Database that can be override / augmented by the application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 type ClassicalApplicationConfig struct {
 	ApplicationConfig
 	Database database.Config `json:"database"`
 }
 
 // CQRSApplicationConfig represents an API configuration implementing CQRS including a read SQL Database, a write SQL Database that can be override / augmented by the application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 type CQRSApplicationConfig struct {
 	ApplicationConfig
 	ReadDatabase  database.Config `json:"read_database"`
@@ -44,6 +47,7 @@ type CQRSApplicationConfig struct {
 }
 
 // Application represents a minimal API
+// Deprecated: This function should no longer be used. Use the API servers instead.
 type Application struct {
 	HealthzHandler web.Handler
 	Logger         *logging.Logger
@@ -53,6 +57,7 @@ type Application struct {
 }
 
 // ClassicalApplication represents a classical API including a SQL Database
+// Deprecated: This function should no longer be used. Use the API servers instead.
 type ClassicalApplication struct {
 	Application
 	config   ClassicalApplicationConfig
@@ -60,6 +65,7 @@ type ClassicalApplication struct {
 }
 
 // CQRSApplication represents an API with CQRS abstraction including a read and a write Database
+// Deprecated: This function should no longer be used. Use the API servers instead.
 type CQRSApplication struct {
 	Application
 	config        CQRSApplicationConfig
@@ -68,6 +74,7 @@ type CQRSApplication struct {
 }
 
 // DefaultApplicationConfig are sane default configuration for any minimal application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 var DefaultApplicationConfig = ApplicationConfig{
 	API:             web.DefaultServerConfig,
 	Monitoring:      web.DefaultMonitoringConfig,
@@ -77,12 +84,14 @@ var DefaultApplicationConfig = ApplicationConfig{
 }
 
 // DefaultClassicalApplicationConfig are sane default configuration for any classical application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 var DefaultClassicalApplicationConfig = ClassicalApplicationConfig{
 	ApplicationConfig: DefaultApplicationConfig,
 	Database:          database.DefaultConfig,
 }
 
 // DefaultCQRSApplicationConfig are sane default configuration for any CQRS application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 var DefaultCQRSApplicationConfig = CQRSApplicationConfig{
 	ApplicationConfig: DefaultApplicationConfig,
 	ReadDatabase:      database.DefaultConfig,
@@ -114,6 +123,7 @@ func ReadConfiguration(filepath string, cfg interface{}) error {
 }
 
 // NewClassicalApplication creates a classical application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalApplication, error) {
 	db, err := database.Connect(config.Database)
 	if err != nil {
@@ -137,6 +147,7 @@ func NewClassicalApplication(config ClassicalApplicationConfig) (*ClassicalAppli
 }
 
 // NewCQRSApplication creates a CQRS application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func NewCQRSApplication(config CQRSApplicationConfig) (*CQRSApplication, error) {
 	readDb, err := database.Connect(config.ReadDatabase)
 	if err != nil {
@@ -168,6 +179,7 @@ func NewCQRSApplication(config CQRSApplicationConfig) (*CQRSApplication, error) 
 }
 
 // NewDBLessApplication creates a minimal application
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
 	logger, err := logging.NewDefaultLogger()
 	if err != nil {
@@ -183,6 +195,7 @@ func NewDBLessApplication(config ApplicationConfig) (*Application, error) {
 }
 
 // Start spawns the HTTP and Monitoring servers
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func (a *Application) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, serviceCheckers []web.HealthzChecker) error {
 	a.Router = router
 
@@ -194,6 +207,7 @@ func (a *Application) Start(name string, arguments []string, router *web.Router,
 }
 
 // Start spawns the HTTP and Monitoring servers or run migrations if the first argument is "migrate"
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func (c *ClassicalApplication) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
 	var command string
 
@@ -214,6 +228,7 @@ func (c *ClassicalApplication) Start(name string, arguments []string, router *we
 }
 
 // Start spawns the HTTP and Monitoring servers or run migrations if the first argument is "migrate"
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func (c *CQRSApplication) Start(name string, arguments []string, router *web.Router, metricViews []*metrics.View, serviceCheckers []web.HealthzChecker, migrations []darwin.Migration) error {
 	var command string
 
@@ -234,16 +249,19 @@ func (c *CQRSApplication) Start(name string, arguments []string, router *web.Rou
 }
 
 // StartMigrations runs the migrations
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func (c *ClassicalApplication) StartMigrations(migrations []darwin.Migration) error {
 	return database.Migrate(c.Database, migrations)
 }
 
 // StartMigrations runs the migrations
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func (c *CQRSApplication) StartMigrations(migrations []darwin.Migration) error {
 	return database.Migrate(c.WriteDatabase, migrations)
 }
 
 // StartServers spawns the HTTP and Monitoring server
+// Deprecated: This function should no longer be used. Use the API servers instead.
 func (a *Application) StartServers(name string, serviceCheckers []web.HealthzChecker) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
