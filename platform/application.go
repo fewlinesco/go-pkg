@@ -13,7 +13,6 @@ import (
 	"github.com/getsentry/sentry-go"
 
 	"github.com/fewlinesco/go-pkg/platform/database"
-	"github.com/fewlinesco/go-pkg/platform/eventing"
 	"github.com/fewlinesco/go-pkg/platform/logging"
 	"github.com/fewlinesco/go-pkg/platform/metrics"
 	"github.com/fewlinesco/go-pkg/platform/monitoring"
@@ -27,7 +26,6 @@ type ApplicationConfig struct {
 	Monitoring      web.ServerConfig  `json:"monitoring"`
 	Tracing         tracing.Config    `json:"tracing"`
 	ErrorMonitoring monitoring.Config `json:"error_monitoring"`
-	Eventing        eventing.Config   `json:"eventing"`
 }
 
 // ClassicalApplicationConfig represents a classical API configuration including a SQL Database that can be override / augmented by the application
@@ -73,7 +71,6 @@ var DefaultApplicationConfig = ApplicationConfig{
 	Monitoring:      web.DefaultMonitoringConfig,
 	Tracing:         tracing.DefaultConfig,
 	ErrorMonitoring: monitoring.DefaultConfig,
-	Eventing:        eventing.DefaultConfig,
 }
 
 // DefaultClassicalApplicationConfig are sane default configuration for any classical application
