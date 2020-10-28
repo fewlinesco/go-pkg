@@ -26,14 +26,12 @@ type APIServerError struct {
 
 // Start starts an API server and sends a message to the error channel in case it would have to close down
 func (s *APIServer) Start(errorChannel chan APIServerError) {
-	go func() {
-		err := s.Server.ListenAndServe()
+	err := s.Server.ListenAndServe()
 
-		errorChannel <- APIServerError{
-			Origin: s.Name,
-			Error:  err,
-		}
-	}()
+	errorChannel <- APIServerError{
+		Origin: s.Name,
+		Error:  err,
+	}
 }
 
 // CreateMetricsHandler returns a http handler which can be used on the monitoring server to look at any collected metrics
