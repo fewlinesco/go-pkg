@@ -15,11 +15,11 @@
       "type": "string"
     },
     "code": {
-      "type": "integer"
+      "type": "string"
     },
     "datatype": {
       "$ref": "#/definitions/datatypes"
     }
   },
-  "required": ["code", "datatype"]
+  "required": ["id", "code", "datatype"]
 }
