@@ -135,13 +135,13 @@ func IsForeignKeyConstraintError(err error, constraintName string) bool {
 	return e.Code == "23503" && e.Constraint == constraintName
 }
 
-// IsEnumInvalidValueError is a helper checking a database error and returns true if it's a invalid input value for an enum type
-func IsEnumInvalidValueError(err error) bool {
+// IsEnumInvalidValueError is a helper checking a database error and returns true if it's a invalid input value for a given enum type
+func IsEnumInvalidValueError(err error, enumName string) bool {
 	e, ok := err.(*pq.Error)
 	if !ok {
 		return false
 	}
-	return e.Code == "22P02" && strings.Contains(e.Message, "invalid input value for enum")
+	return e.Code == "22P02" && strings.Contains(e.Message, fmt.Sprintf("invalid input value for enum %s", enumName))
 }
 
 // GetCurrentTimestamp is a helper function that generates a new UTC timestamp truncated at the millisecond
