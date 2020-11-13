@@ -15,7 +15,7 @@ type decodeWithJSONSchemaTestData struct {
 	ValidateResponse func(testProvider *testing.T, outcome error, data decodeWithJSONSchemaTestData)
 	JSONSchemaPath   string
 	DecoderOptions   web.DecoderOptions
-	ExpectsError    bool
+	ExpectsError     bool
 	ExpectedOutcome  expectedModel
 }
 
@@ -33,7 +33,7 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectsError:  false,
+			ExpectsError:   false,
 			ExpectedOutcome: expectedModel{
 				ID:       "d43c45b0-f420-4de9-8745-6e3840ab39fd",
 				Code:     "code",
@@ -45,42 +45,42 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			Body:           `{"code": "code", "id": "c9ecb26a-20ab-4acb-b34e-444457b06b3b", "datatype": "string"}`,
 			JSONSchemaPath: "../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectsError:  true,
+			ExpectsError:   true,
 		},
 		{
 			Name:           "when a parameter has an incorrect datatype",
 			Body:           `{"code": 1", "id": "815b73a1-3d89-4c68-a4d8-1f36c091a533", "datatype": "string"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectsError:  true,
+			ExpectsError:   true,
 		},
 		{
 			Name:           "when a parameter has an incorrect enum type",
 			Body:           `{"code": "code", "id": "10fbd107-4bcf-4c91-8ee2-957e07d6109e", "datatype": "hello"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectsError:  true,
+			ExpectsError:   true,
 		},
 		{
 			Name:           "when the json has an unknown field and the decoder options are empty",
 			Body:           `{"code": "code", "id": "78c8803e-ce4e-474e-97c4-7bd6d565ddca", "datatype": "string", "unknown_field": "hello"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectsError:  true,
+			ExpectsError:   true,
 		},
 		{
 			Name:           "when the json has an unknown field and the decoder options specify it should not allow unknown fields ",
 			Body:           `{"code": "code", "id": "ec85bd34-67bf-4418-95cb-2616e914bfc9", "datatype": "string", "unknown_field": "hello"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{AllowUnknownFields: false},
-			ExpectsError:  true,
+			ExpectsError:   true,
 		},
 		{
 			Name:           "when the json has an unknown field and the decoder options specify it should not allow unknown fields ",
 			Body:           `{"code": "code", "id": "8321308a-4cae-4175-8c56-2db087e5ca10", "datatype": "integer", "unknown_field": "hello"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{AllowUnknownFields: true},
-			ExpectsError:  false,
+			ExpectsError:   false,
 			ExpectedOutcome: expectedModel{
 				ID:       "8321308a-4cae-4175-8c56-2db087e5ca10",
 				Code:     "code",
