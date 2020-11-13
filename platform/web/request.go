@@ -45,7 +45,7 @@ func init() {
 func Decode(r *http.Request, val interface{}, options DecoderOptions) error {
 	decoder := json.NewDecoder(r.Body)
 
-	if !options.AllowUnknownFields{
+	if !options.AllowUnknownFields {
 		decoder.DisallowUnknownFields()
 	}
 
