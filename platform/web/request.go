@@ -23,6 +23,8 @@ var validate = validator.New()
 var translator *ut.UniversalTranslator
 var fieldRegex = regexp.MustCompile(`json: unknown field "([^"]+)"`)
 
+// DecoderOptions describes a set of options you can pass to alter the behaviour of the decoders
+// AllowUnknownFields ensures that the decoder can pass the json even if it contains a field unknown to the strict
 type DecoderOptions struct {
 	AllowUnknownFields bool
 }
