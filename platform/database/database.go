@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/fewlinesco/go-pkg/platform/metrics"
@@ -132,6 +133,15 @@ func IsForeignKeyConstraintError(err error, constraintName string) bool {
 	}
 
 	return e.Code == "23503" && e.Constraint == constraintName
+}
+
+// IsEnumInvalidValueError is a helper checking a database error and returns true if it's a invalid input value for an enum type
+func IsEnumInvalidValueError(err error) bool {
+	e, ok := err.(*pq.Error)
+	if !ok {
+		return false
+	}
+	return e.Code == "22P02" && strings.Contains(e.Message, "invalid input value for enum")
 }
 
 // GetCurrentTimestamp is a helper function that generates a new UTC timestamp truncated at the millisecond
