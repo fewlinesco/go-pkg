@@ -44,40 +44,8 @@ func init() {
 }
 
 // Decode reads the body of an HTTP request as JSON and fill a struct with its content. It's also in charge of validating the content of the struct based on gopkg.in/go-playground/validator.v9 validation tags.
-func Decode(r *http.Request, val interface{}, options DecoderOptions) error {
-	decoder := json.NewDecoder(r.Body)
-
-	if !options.AllowUnknownFields {
-		decoder.DisallowUnknownFields()
-	}
-
-	if err := decoder.Decode(val); err != nil {
-		switch e := err.(type) {
-		case *json.UnmarshalTypeError:
-			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
-				e.Field: fmt.Sprintf("%s must be a %s", e.Field, e.Type.String()),
-			}))
-		case *json.SyntaxError:
-			return fmt.Errorf("%v: %w", err, newErrUnmarshallableJSON())
-		}
-
-		if err.Error() == "EOF" {
-			return fmt.Errorf("%v: %w", err, newErrMissingRequestBody())
-		}
-
-		if strings.Contains(err.Error(), "json: unknown field") {
-			matches := fieldRegex.FindStringSubmatch(err.Error())
-			fieldName := matches[1]
-
-			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
-				fieldName: fmt.Sprintf("%s field is not allowed", fieldName),
-			}))
-		}
-
-		return fmt.Errorf("%T, %v: %w", err, err, newErrUnmarshallableJSON())
-	}
-
-	return Validate(val, newErrInvalidRequestBodyContent)
+func Decode(r *http.Request, val interface{}) error {
+	return decode(r, val, DecoderOptions{AllowUnknownFields: false})
 }
 
 // DecodeWithJSONSchema takes the path to a json schema and a http request
@@ -112,11 +80,47 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	if err := Decode(request, model, options); err != nil {
+	if err := decode(request, model, options); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func decode(r *http.Request, val interface{}, options DecoderOptions) error {
+	decoder := json.NewDecoder(r.Body)
+
+	if !options.AllowUnknownFields {
+		decoder.DisallowUnknownFields()
+	}
+
+	if err := decoder.Decode(val); err != nil {
+		switch e := err.(type) {
+		case *json.UnmarshalTypeError:
+			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
+				e.Field: fmt.Sprintf("%s must be a %s", e.Field, e.Type.String()),
+			}))
+		case *json.SyntaxError:
+			return fmt.Errorf("%v: %w", err, newErrUnmarshallableJSON())
+		}
+
+		if err.Error() == "EOF" {
+			return fmt.Errorf("%v: %w", err, newErrMissingRequestBody())
+		}
+
+		if strings.Contains(err.Error(), "json: unknown field") {
+			matches := fieldRegex.FindStringSubmatch(err.Error())
+			fieldName := matches[1]
+
+			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
+				fieldName: fmt.Sprintf("%s field is not allowed", fieldName),
+			}))
+		}
+
+		return fmt.Errorf("%T, %v: %w", err, err, newErrUnmarshallableJSON())
+	}
+
+	return Validate(val, newErrInvalidRequestBodyContent)
 }
 
 // Validate checks the struct is valid based on gopkg.in/go-playground/validator.v9 validation tags.
