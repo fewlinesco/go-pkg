@@ -23,6 +23,10 @@ var validate = validator.New()
 var translator *ut.UniversalTranslator
 var fieldRegex = regexp.MustCompile(`json: unknown field "([^"]+)"`)
 
+type DecoderOptions struct {
+	AllowUnknownFields bool
+}
+
 func init() {
 	enLocale := en.New()
 	translator = ut.New(enLocale, enLocale)
@@ -38,9 +42,13 @@ func init() {
 }
 
 // Decode reads the body of an HTTP request as JSON and fill a struct with its content. It's also in charge of validating the content of the struct based on gopkg.in/go-playground/validator.v9 validation tags.
-func Decode(r *http.Request, val interface{}) error {
+func Decode(r *http.Request, val interface{}, options DecoderOptions) error {
 	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
+
+	if !options.AllowUnknownFields{
+		decoder.DisallowUnknownFields()
+	}
+
 	if err := decoder.Decode(val); err != nil {
 		switch e := err.(type) {
 		case *json.UnmarshalTypeError:
@@ -72,7 +80,7 @@ func Decode(r *http.Request, val interface{}) error {
 
 // DecodeWithJSONSchema takes the path to a json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
-func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath string) error {
+func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath string, options DecoderOptions) error {
 	body, _ := ioutil.ReadAll(request.Body)
 
 	_, rootFile, _, ok := runtime.Caller(1)
@@ -102,7 +110,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	if err := Decode(request, model); err != nil {
+	if err := Decode(request, model, options); err != nil {
 		return err
 	}
 
