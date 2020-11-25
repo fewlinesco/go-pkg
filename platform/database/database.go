@@ -251,7 +251,7 @@ func (tx *Tx) GetContext(ctx context.Context, dest interface{}, statement string
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = tx.tx.GetContext(ctx, dest, statement, args)
+		err = tx.tx.GetContext(ctx, dest, statement, args...)
 	})
 
 	metrics.RecordError(ctx, metricQueryErrorTotal, err)
