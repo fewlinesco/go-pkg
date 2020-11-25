@@ -274,3 +274,16 @@ func (tx *Tx) NamedExecContext(ctx context.Context, statement string, arg interf
 
 	return response, err
 }
+
+// SelectContext fetches a slice of elements from database.
+func (tx *Tx) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+	var err error
+
+	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
+		err = tx.tx.SelectContext(ctx, dest, statement, args...)
+	})
+
+	metrics.RecordError(ctx, metricQueryErrorTotal, err)
+
+	return err
+}
