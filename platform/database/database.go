@@ -287,3 +287,19 @@ func (tx *Tx) SelectContext(ctx context.Context, dest interface{}, statement str
 
 	return err
 }
+
+// ExecContext executes any SQL query to the server. It's mostly use for insert/update commands
+func (tx *Tx) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
+	var (
+		response sql.Result
+		err      error
+	)
+
+	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
+		response, err = tx.tx.ExecContext(ctx, statement, arg...)
+	})
+
+	metrics.RecordError(ctx, metricQueryErrorTotal, err)
+
+	return response, err
+}
