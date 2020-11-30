@@ -55,6 +55,9 @@ func NewErrUnmanagedResponse(traceid string) error {
 	return &Error{
 		HTTPCode:     http.StatusInternalServerError,
 		ErrorMessage: UnmanagedErrorMessage,
+		Details: map[string]string{
+			"traceid": traceid,
+		},
 	}
 }
 
