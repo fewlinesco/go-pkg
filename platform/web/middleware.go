@@ -21,7 +21,7 @@ func wrapMiddleware(middlewares []Middleware, handler Handler) Handler {
 // DefaultMiddlewares contains the minimum middlewares every server should define for all its endpoints
 func DefaultMiddlewares(logger *logging.Logger) []Middleware {
 	return []Middleware{
-		RecoveryMiddleware(),
+		RecoveryMiddleware(logger),
 		ErrorsMiddleware(),
 		LoggerMiddleware(logger),
 	}
