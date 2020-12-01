@@ -38,7 +38,6 @@ func RecoveryMiddleware(logger *logging.Logger) Middleware {
 						fmt.Errorf("a panic has been recovered: %v", recoverErr).Error(),
 					)
 					_ = Respond(ctx, w, NewErrUnmanagedResponse(v.TraceID), http.StatusInternalServerError)
-					err = nil
 				}
 				span.End()
 			}()
