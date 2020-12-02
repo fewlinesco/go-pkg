@@ -69,13 +69,35 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 	}
 
 	if !result.Valid() {
-		errorDetails := make(ErrorDetails)
+		requiredPropertyErrors := make(ErrorDetails)
+		requestContentErrorDetails := make(ErrorDetails)
 
 		for _, desc := range result.Errors() {
-			errorDetails[desc.Field()] = desc.Description()
+			if desc.Type() == "required" {
+				property , ok :=  desc.Details()["property"]
+				if !ok {
+					property = desc.Field()
+				}
+
+				requiredProperty := fmt.Sprintf("%s", property)
+
+				requiredPropertyErrors[requiredProperty] = desc.Description()
+				continue
+			}
+
+			requestContentErrorDetails[desc.Field()] = desc.Description()
 		}
 
-		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(errorDetails))
+		if len(requiredPropertyErrors) > 0 {
+			errDetails := requiredPropertyErrors
+			for property, errMessage := range requestContentErrorDetails {
+				errDetails[property] = errMessage
+			}
+
+			return fmt.Errorf("the request body is missing some required keys: %w", NewErrBadRequestResponse(errDetails))
+		}
+
+		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
 	}
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))

@@ -96,6 +96,25 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 				DataType: "integer",
 			},
 		},
+		{
+			Name:           "it returns a bad request reponse when a required key is missing",
+			Body:           `{"code": "code", "datatype": "integer"}`,
+			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
+			DecoderOptions: web.DecoderOptions{},
+			ExpectedError:  web.NewErrBadRequestResponse(web.ErrorDetails{
+				"id": "id is required",
+			}),
+		},
+		{
+			Name:           "it returns a bad request reponse when a required key is missing and there is an issue with another property",
+			Body:           `{"code": 5, "datatype": "integer"}`,
+			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
+			DecoderOptions: web.DecoderOptions{},
+			ExpectedError:  web.NewErrBadRequestResponse(web.ErrorDetails{
+				"id": "id is required",
+				"code": "Invalid type. Expected: string, given: integer",
+			}),
+		},
 	}
 
 	for _, tc := range tcs {
