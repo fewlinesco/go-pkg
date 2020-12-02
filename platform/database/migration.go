@@ -7,8 +7,8 @@ import (
 )
 
 // Migrate is a helper function in charge of running pending migrations
-func Migrate(db *DB, migrations []darwin.Migration) error {
-	driver := darwin.NewGenericDriver(db.db.DB, darwin.PostgresDialect{})
+func Migrate(db DB, migrations []darwin.Migration) error {
+	driver := db.NewGenericDriver(darwin.PostgresDialect{})
 
 	d := darwin.New(driver, migrations, nil)
 

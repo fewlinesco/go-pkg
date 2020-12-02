@@ -59,7 +59,7 @@ type Application struct {
 type ClassicalApplication struct {
 	Application
 	config   ClassicalApplicationConfig
-	Database *database.DB
+	Database database.DB
 }
 
 // CQRSApplication represents an API with CQRS abstraction including a read and a write Database
@@ -67,8 +67,8 @@ type ClassicalApplication struct {
 type CQRSApplication struct {
 	Application
 	config        CQRSApplicationConfig
-	ReadDatabase  *database.DB
-	WriteDatabase *database.DB
+	ReadDatabase  database.DB
+	WriteDatabase database.DB
 }
 
 // DefaultApplicationConfig are sane default configuration for any minimal application
