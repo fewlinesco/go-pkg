@@ -276,6 +276,5 @@ func TestProdDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get data inserted in a transaction %#v", err)
 	}
-	t.Fatal("muhahaha")
 
 }
