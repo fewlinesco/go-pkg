@@ -101,7 +101,7 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			Body:           `{"code": "code", "datatype": "integer"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectedError:  web.NewErrBadRequestResponse(web.ErrorDetails{
+			ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
 				"id": "id is required",
 			}),
 		},
@@ -110,8 +110,8 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			Body:           `{"code": 5, "datatype": "integer"}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectedError:  web.NewErrBadRequestResponse(web.ErrorDetails{
-				"id": "id is required",
+			ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
+				"id":   "id is required",
 				"code": "Invalid type. Expected: string, given: integer",
 			}),
 		},

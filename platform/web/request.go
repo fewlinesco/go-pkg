@@ -74,7 +74,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 
 		for _, desc := range result.Errors() {
 			if desc.Type() == "required" {
-				property , ok :=  desc.Details()["property"]
+				property, ok := desc.Details()["property"]
 				if !ok {
 					property = desc.Field()
 				}
