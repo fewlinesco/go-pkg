@@ -19,6 +19,9 @@
     },
     "datatype": {
       "$ref": "#/definitions/datatypes"
+    },
+    "title": {
+      "type": "string"
     }
   },
   "required": ["id", "code", "datatype"]

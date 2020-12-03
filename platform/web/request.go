@@ -55,7 +55,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 
 	_, rootFile, _, ok := runtime.Caller(1)
 	if !ok {
-		return fmt.Errorf("%w", newErrInvalidJSONSchemaFilePath())
+		return fmt.Errorf("%w", NewErrInvalidJSONSchemaFilePath())
 	}
 
 	filePath = path.Join(path.Dir(rootFile), filePath)
@@ -69,13 +69,35 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 	}
 
 	if !result.Valid() {
-		errorDetails := make(ErrorDetails)
+		requiredPropertyErrors := make(ErrorDetails)
+		requestContentErrorDetails := make(ErrorDetails)
 
 		for _, desc := range result.Errors() {
-			errorDetails[desc.Field()] = desc.Description()
+			if desc.Type() == "required" {
+				property, ok := desc.Details()["property"]
+				if !ok {
+					property = desc.Field()
+				}
+
+				requiredProperty := fmt.Sprintf("%s", property)
+
+				requiredPropertyErrors[requiredProperty] = desc.Description()
+				continue
+			}
+
+			requestContentErrorDetails[desc.Field()] = desc.Description()
 		}
 
-		return fmt.Errorf("%w", newErrInvalidRequestBodyContent(errorDetails))
+		if len(requiredPropertyErrors) > 0 {
+			errDetails := requiredPropertyErrors
+			for property, errMessage := range requestContentErrorDetails {
+				errDetails[property] = errMessage
+			}
+
+			return fmt.Errorf("the request body is missing some required keys: %w", NewErrBadRequestResponse(errDetails))
+		}
+
+		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
 	}
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
@@ -101,11 +123,11 @@ func decode(r *http.Request, val interface{}, options DecoderOptions) error {
 				e.Field: fmt.Sprintf("%s must be a %s", e.Field, e.Type.String()),
 			}))
 		case *json.SyntaxError:
-			return fmt.Errorf("%v: %w", err, newErrUnmarshallableJSON())
+			return fmt.Errorf("%v: %w", err, NewErrUnmarshallableJSON())
 		}
 
 		if err.Error() == "EOF" {
-			return fmt.Errorf("%v: %w", err, newErrMissingRequestBody())
+			return fmt.Errorf("%v: %w", err, NewErrMissingRequestBody())
 		}
 
 		if strings.Contains(err.Error(), "json: unknown field") {
@@ -117,10 +139,10 @@ func decode(r *http.Request, val interface{}, options DecoderOptions) error {
 			}))
 		}
 
-		return fmt.Errorf("%T, %v: %w", err, err, newErrUnmarshallableJSON())
+		return fmt.Errorf("%T, %v: %w", err, err, NewErrUnmarshallableJSON())
 	}
 
-	return Validate(val, newErrInvalidRequestBodyContent)
+	return Validate(val, NewErrInvalidRequestBodyContent)
 }
 
 // Validate checks the struct is valid based on gopkg.in/go-playground/validator.v9 validation tags.
