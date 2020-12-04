@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/GuiaBolso/darwin"
-	"github.com/fewlinesco/go-pkg/platform/metrics"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -16,8 +15,9 @@ type sandboxDB struct {
 }
 
 type sandboxTx struct {
-	tx            *sqlx.Tx
-	savepointName string
+	tx                    *sqlx.Tx
+	savepointName         string
+	rollBackedOrCommitted bool
 }
 
 func TestConnect(config Config) (DB, error) {
@@ -55,144 +55,81 @@ func (db *sandboxDB) NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDri
 
 func (db *sandboxDB) Begin() (Tx, error) {
 	fmt.Println("BEGIN")
-	db.tx.MustExec("SAVEPOINT postgres_savepoint;")
+	db.tx.MustExec("SAVEPOINT go_pkg_database_sandbox_savepoint;")
 
 	return &sandboxTx{tx: db.tx}, nil
 }
 
 func (db *sandboxDB) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
-	var err error
 
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = db.tx.SelectContext(ctx, dest, statement, args...)
-	})
+	return db.tx.SelectContext(ctx, dest, statement, args...)
 
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return err
 }
 
 func (db *sandboxDB) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
-	var err error
 
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = db.tx.GetContext(ctx, dest, statement, args...)
-	})
+	return db.tx.GetContext(ctx, dest, statement, args...)
 
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return err
 }
 
 func (db *sandboxDB) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
-	var (
-		response sql.Result
-		err      error
-	)
 
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		response, err = db.tx.ExecContext(ctx, statement, arg...)
-	})
+	return db.tx.ExecContext(ctx, statement, arg...)
 
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return response, err
 }
 
 func (db *sandboxDB) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
-	var (
-		response sql.Result
-		err      error
-	)
 
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		response, err = db.tx.NamedExecContext(ctx, statement, arg)
-	})
+	return db.tx.NamedExecContext(ctx, statement, arg)
 
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return response, err
 }
 
 func (db *sandboxDB) PingContext(ctx context.Context) error {
-	var err error
 
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = db.db.PingContext(ctx)
-	})
+	return db.db.PingContext(ctx)
 
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return err
 }
 
 func (tx *sandboxTx) Commit() error {
-	fmt.Println("COMMIT")
-	tx.tx.MustExec("RELEASE SAVEPOINT postgres_savepoint;")
+	if tx.rollBackedOrCommitted {
+		return fmt.Errorf("transaction has already been rollbacked or commited")
+	}
+
+	_, err := tx.tx.Exec("RELEASE SAVEPOINT go_pkg_database_sandbox_savepoint;")
+	if err != nil {
+		return fmt.Errorf("could not commit savepoint (database sandbox transaction commit emulation): %#w", err)
+	}
 
 	return nil
 }
 
 func (tx *sandboxTx) Rollback() error {
-	fmt.Println("ROLLBACK")
-	_, err := tx.tx.Exec("ROLLBACK TO SAVEPOINT postgres_savepoint; RELEASE SAVEPOINT postgres_savepoint;")
+	if tx.rollBackedOrCommitted {
+		return fmt.Errorf("transaction has already been rollbacked or commited")
+	}
+
+	_, err := tx.tx.Exec("ROLLBACK TO SAVEPOINT go_pkg_database_sandbox_savepoint; RELEASE SAVEPOINT go_pkg_database_sandbox_savepoint;")
 	if err != nil {
-		return fmt.Errorf("could not rollback to savepoint (test Database transaction rollback emulation) %w", err)
+		return fmt.Errorf("could not rollback to savepoint (database sandbox transaction rollback emulation) %w", err)
 	}
 
 	return nil
 }
 
 func (tx *sandboxTx) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
-	var err error
 
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = tx.tx.SelectContext(ctx, dest, statement, args...)
-	})
+	return tx.tx.SelectContext(ctx, dest, statement, args...)
 
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return err
 }
 
 func (tx *sandboxTx) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
-	var err error
-
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		err = tx.tx.GetContext(ctx, dest, statement, args...)
-	})
-
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return err
+	return tx.tx.GetContext(ctx, dest, statement, args...)
 }
 
 func (tx *sandboxTx) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
-	var (
-		response sql.Result
-		err      error
-	)
-
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		response, err = tx.tx.ExecContext(ctx, statement, arg...)
-	})
-
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return response, err
+	return tx.tx.ExecContext(ctx, statement, arg...)
 }
 
 func (tx *sandboxTx) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
-	var (
-		response sql.Result
-		err      error
-	)
-
-	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		response, err = tx.tx.NamedExecContext(ctx, statement, arg)
-	})
-
-	metrics.RecordError(ctx, metricQueryErrorTotal, err)
-
-	return response, err
+	return tx.tx.NamedExecContext(ctx, statement, arg)
 }
