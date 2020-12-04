@@ -422,6 +422,284 @@ func TestProdDatabase(t *testing.T) {
 			doTest(tc, t)
 		}
 	})
+
+	t.Run("Transactions Commit", func(t *testing.T) {
+		type testCase struct {
+			name        string
+			transaction func(tx database.Tx, t *testing.T)
+			shouldErr   bool
+			data        []testData
+		}
+
+		tcs := []testCase{
+			{
+				name: "when everything works in the transaction it can be commited",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						secondData,
+					)
+				},
+				shouldErr: false,
+				data:      []testData{firstData, secondData},
+			},
+			{
+				name: "when something fails in the transaction it cannot be commited",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						firstData,
+					)
+				},
+				shouldErr: true,
+				data:      []testData{firstData},
+			},
+			{
+				name: "when everything works in the transaction but it has been manually rollbacked it cannot be commited",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						secondData,
+					)
+					tx.Rollback()
+				},
+				shouldErr: true,
+				data:      []testData{firstData},
+			},
+			{
+				name: "when a transaction has already been commited it cannot be commited again",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						secondData,
+					)
+					tx.Commit()
+				},
+				shouldErr: true,
+				data:      []testData{firstData, secondData},
+			},
+		}
+		doTest := func(tc testCase, t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
+				cleanup := migrate(cfg, t)
+				defer cleanup()
+				sqlxDB, err := connect(cfg)
+				if err != nil {
+					t.Fatalf("could not create sqlx connection: %#v", err)
+				}
+				defer sqlxDB.Close()
+
+				_, err = sqlxDB.NamedExecContext(
+					context.Background(),
+					`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+					firstData,
+				)
+
+				if err != nil {
+					t.Fatalf("cannot setup test: %#v", err)
+				}
+
+				db, err := database.Connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect to the database: %#v", err)
+				}
+				defer db.Close()
+
+				tx, err := db.Begin()
+				if err != nil {
+					t.Fatalf("could not start a transaction: %#v", err)
+				}
+
+				tc.transaction(tx, t)
+				err = tx.Commit()
+				if tc.shouldErr {
+					if err == nil {
+						t.Fatalf("commit should throw an error but err was nil")
+					}
+				} else {
+					if err != nil {
+						t.Fatalf("commit shouldn't return an error but returned: %#v", err)
+					}
+				}
+
+				var selectTestData []testData
+				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				if err != nil {
+					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
+				}
+
+				for _, sfd := range tc.data {
+					found := false
+					for _, std := range selectTestData {
+						if std.ID == sfd.ID {
+							found = true
+						}
+					}
+					if !found {
+						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
+					}
+				}
+
+				for _, std := range selectTestData {
+					found := false
+					for _, sfd := range tc.data {
+						if std.ID == sfd.ID {
+							found = true
+						}
+					}
+					if !found {
+						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
+					}
+				}
+			})
+		}
+		for _, tc := range tcs {
+			doTest(tc, t)
+		}
+	})
+
+	t.Run("Transactions Rollback", func(t *testing.T) {
+		type testCase struct {
+			name        string
+			transaction func(tx database.Tx, t *testing.T)
+			shouldErr   bool
+			data        []testData
+		}
+
+		tcs := []testCase{
+			{
+				name: "when a transaction is rollbacked data is not saved",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						secondData,
+					)
+				},
+				shouldErr: false,
+				data:      []testData{firstData},
+			},
+			{
+				name: "when something fails in the transaction it can be rollbacked",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						firstData,
+					)
+				},
+				shouldErr: false,
+				data:      []testData{firstData},
+			},
+			{
+				name: "when a transaction is already committed, rollbacking has no effect",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						secondData,
+					)
+					tx.Commit()
+				},
+				shouldErr: true,
+				data:      []testData{firstData, secondData},
+			},
+			{
+				name: "when a transaction has already been rollbacked it cannot be rollbacked again",
+				transaction: func(tx database.Tx, t *testing.T) {
+					_, err = tx.NamedExecContext(
+						context.Background(),
+						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						secondData,
+					)
+					tx.Rollback()
+				},
+				shouldErr: true,
+				data:      []testData{firstData},
+			},
+		}
+		doTest := func(tc testCase, t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
+				cleanup := migrate(cfg, t)
+				defer cleanup()
+				sqlxDB, err := connect(cfg)
+				if err != nil {
+					t.Fatalf("could not create sqlx connection: %#v", err)
+				}
+				defer sqlxDB.Close()
+
+				_, err = sqlxDB.NamedExecContext(
+					context.Background(),
+					`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+					firstData,
+				)
+
+				if err != nil {
+					t.Fatalf("cannot setup test: %#v", err)
+				}
+
+				db, err := database.Connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect to the database: %#v", err)
+				}
+				defer db.Close()
+
+				tx, err := db.Begin()
+				if err != nil {
+					t.Fatalf("could not start a transaction: %#v", err)
+				}
+
+				tc.transaction(tx, t)
+				err = tx.Rollback()
+				if tc.shouldErr {
+					if err == nil {
+						t.Fatalf("commit should throw an error but err was nil")
+					}
+				} else {
+					if err != nil {
+						t.Fatalf("commit shouldn't return an error but returned: %#v", err)
+					}
+				}
+
+				var selectTestData []testData
+				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				if err != nil {
+					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
+				}
+
+				for _, sfd := range tc.data {
+					found := false
+					for _, std := range selectTestData {
+						if std.ID == sfd.ID {
+							found = true
+						}
+					}
+					if !found {
+						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
+					}
+				}
+
+				for _, std := range selectTestData {
+					found := false
+					for _, sfd := range tc.data {
+						if std.ID == sfd.ID {
+							found = true
+						}
+					}
+					if !found {
+						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
+					}
+				}
+			})
+		}
+		for _, tc := range tcs {
+			doTest(tc, t)
+		}
+	})
 }
 
 func migrate(cfg database.Config, t *testing.T) func() {
@@ -435,10 +713,12 @@ func migrate(cfg database.Config, t *testing.T) func() {
 		{
 			Version:     1,
 			Description: "Create test data table",
-			Script: `CREATE TABLE test_data(
+			Script: `
+				DROP TABLE IF EXISTS test_data;
+				CREATE TABLE test_data(
 					id UUID PRIMARY KEY,
 					value VARCHAR(63)
-					)`,
+				)`,
 		},
 	})
 
