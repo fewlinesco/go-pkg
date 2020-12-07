@@ -20,6 +20,7 @@ type sandboxTx struct {
 	rollBackedOrCommitted bool
 }
 
+// SandboxConnect returns a sandboxed database connection from the given configuration
 func SandboxConnect(config Config) (DB, error) {
 	db, err := connect(config)
 	if err != nil {
