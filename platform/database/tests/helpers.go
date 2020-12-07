@@ -26,7 +26,7 @@ func migrate(cfg database.Config, t *testing.T) func() {
 				DROP TABLE IF EXISTS test_data;
 				CREATE TABLE test_data(
 					id UUID PRIMARY KEY,
-					value VARCHAR(63)
+					code VARCHAR(63)
 				)`,
 		},
 	})
