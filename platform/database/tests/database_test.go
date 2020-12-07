@@ -103,6 +103,9 @@ func TestProdDatabase(t *testing.T) {
 				}
 
 				sqlxDB, err := connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect to sqlxDB: %#v", err)
+				}
 				defer sqlxDB.Close()
 
 				if tc.shouldFindData {
@@ -191,6 +194,9 @@ func TestProdDatabase(t *testing.T) {
 				}
 
 				sqlxDB, err := connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect to sqlxDB: %#v", err)
+				}
 				defer sqlxDB.Close()
 
 				if tc.shouldFindData {
