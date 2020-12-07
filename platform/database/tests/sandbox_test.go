@@ -407,7 +407,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 				if tc.shouldErr {
 					if err == nil {
-						t.Fatalf("erroring exec don't return an error (most likely panics)")
+						t.Fatalf("erroring select don't return an error (most likely panics)")
 					}
 				} else {
 					if err != nil {
