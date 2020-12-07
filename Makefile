@@ -32,7 +32,7 @@ test-github-workflows-up-to-date: $(GH_WORKFLOWS)
 
 test-unit:
 	@echo "+ $@"
-	@$(GO_BIN) test ./...
+	@$(GO_BIN) test -p=1 ./...
 
 test-fmt:
 	@echo "+ $@"
