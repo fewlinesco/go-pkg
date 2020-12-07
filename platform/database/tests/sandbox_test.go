@@ -415,6 +415,10 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 				}
 
+				if len(tc.shouldFindData) != len(selectTestData) {
+					t.Fatalf("expected tc.shouldFindData and selectTestData to have the same length but got tc.shouldFindData: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
+				}
+
 				for _, sfd := range tc.shouldFindData {
 					found := false
 					for _, std := range selectTestData {
@@ -424,18 +428,6 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 					if !found {
 						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
-					}
-				}
-
-				for _, std := range selectTestData {
-					found := false
-					for _, sfd := range tc.shouldFindData {
-						if std.ID == sfd.ID {
-							found = true
-						}
-					}
-					if !found {
-						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.shouldFindData)
 					}
 				}
 			})
@@ -554,6 +546,10 @@ func TestSandboxDatabase(t *testing.T) {
 					t.Fatalf("could not fetch data from the sandboxedDB: %#v", err)
 				}
 
+				if len(tc.data) != len(selectTestData) {
+					t.Fatalf("expected tc.data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
+				}
+
 				for _, sfd := range tc.data {
 					found := false
 					for _, std := range selectTestData {
@@ -563,18 +559,6 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 					if !found {
 						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
-					}
-				}
-
-				for _, std := range selectTestData {
-					found := false
-					for _, sfd := range tc.data {
-						if std.ID == sfd.ID {
-							found = true
-						}
-					}
-					if !found {
-						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
 					}
 				}
 				db.Close()
@@ -694,11 +678,11 @@ func TestSandboxDatabase(t *testing.T) {
 				err = tx.Rollback()
 				if tc.shouldErr {
 					if err == nil {
-						t.Fatalf("commit should throw an error but err was nil")
+						t.Fatalf("rollback should throw an error but err was nil")
 					}
 				} else {
 					if err != nil {
-						t.Fatalf("commit shouldn't return an error but returned: %#v", err)
+						t.Fatalf("rollback shouldn't return an error but returned: %#v", err)
 					}
 				}
 
@@ -706,6 +690,10 @@ func TestSandboxDatabase(t *testing.T) {
 				err = db.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
 				if err != nil {
 					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
+				}
+
+				if len(tc.data) != len(selectTestData) {
+					t.Fatalf("expected tc.data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
 				}
 
 				for _, sfd := range tc.data {
@@ -717,18 +705,6 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 					if !found {
 						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
-					}
-				}
-
-				for _, std := range selectTestData {
-					found := false
-					for _, sfd := range tc.data {
-						if std.ID == sfd.ID {
-							found = true
-						}
-					}
-					if !found {
-						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
 					}
 				}
 
