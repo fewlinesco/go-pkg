@@ -411,7 +411,7 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 				} else {
 					if err != nil {
-						t.Fatalf("could not GetContext %#v", err)
+						t.Fatalf("could not SelectContext %#v", err)
 					}
 				}
 
