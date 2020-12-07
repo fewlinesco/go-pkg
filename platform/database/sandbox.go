@@ -96,8 +96,14 @@ func (tx *sandboxTx) Commit() error {
 
 	_, err := tx.tx.Exec("RELEASE SAVEPOINT go_pkg_database_sandbox_savepoint;")
 	if err != nil {
+		rollbackErr := tx.Rollback()
+		if rollbackErr != nil {
+			panic(fmt.Sprintf("tried to commit but got: %#v; transaction had to be rollbacked but got: %#v", err, rollbackErr))
+		}
 		return fmt.Errorf("could not commit savepoint (database sandbox transaction commit emulation): %#w", err)
 	}
+
+	tx.rollBackedOrCommitted = true
 
 	return nil
 }
@@ -111,6 +117,8 @@ func (tx *sandboxTx) Rollback() error {
 	if err != nil {
 		return fmt.Errorf("could not rollback to savepoint (database sandbox transaction rollback emulation) %w", err)
 	}
+
+	tx.rollBackedOrCommitted = true
 
 	return nil
 }
