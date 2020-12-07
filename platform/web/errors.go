@@ -78,25 +78,25 @@ func NewErrNotFoundResponse() error {
 	}
 }
 
-// newErrUnmarshallableJSON is returned if we are unable to unmarshal the request body to a struct
-func newErrUnmarshallableJSON() error {
+// NewErrUnmarshallableJSON is returned if we are unable to unmarshal the request body to a struct
+func NewErrUnmarshallableJSON() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
 		ErrorMessage: UnmarshallableJSONMessage,
 	}
 }
 
-// newErrMissingRequestBody is returned when there is no body present in the request
-func newErrMissingRequestBody() error {
+// NewErrMissingRequestBody is returned when there is no body present in the request
+func NewErrMissingRequestBody() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
 		ErrorMessage: MissingBodyMessage,
 	}
 }
 
-// newErrInvalidRequest is returned when the request payload is ill-formed
+// NewErrInvalidRequestBodyContent is returned when the request payload is ill-formed
 // and can't be validated using the JSON schema
-func newErrInvalidRequestBodyContent(errorDetails ErrorDetails) error {
+func NewErrInvalidRequestBodyContent(errorDetails ErrorDetails) error {
 	return &Error{
 		ErrorMessage: InvalidRequestBodyContentMessage,
 		HTTPCode:     http.StatusBadRequest,
@@ -104,9 +104,9 @@ func newErrInvalidRequestBodyContent(errorDetails ErrorDetails) error {
 	}
 }
 
-// newErrInvalidJSONSchemaFilePath is returned when the file path provided
+// NewErrInvalidJSONSchemaFilePath is returned when the file path provided
 // to the DecodeWithJSONSchema function contains an error
-func newErrInvalidJSONSchemaFilePath() error {
+func NewErrInvalidJSONSchemaFilePath() error {
 	return &Error{
 		ErrorMessage: InvalidJSONSchemaFilePath,
 		HTTPCode:     http.StatusInternalServerError,
