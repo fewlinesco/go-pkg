@@ -547,7 +547,7 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				if len(tc.data) != len(selectTestData) {
-					t.Fatalf("expected tc.data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
+					t.Fatalf("expected tc.data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.data, selectTestData)
 				}
 
 				for _, sfd := range tc.data {
@@ -693,7 +693,7 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				if len(tc.data) != len(selectTestData) {
-					t.Fatalf("expected tc.data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
+					t.Fatalf("expected tc.data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.data, selectTestData)
 				}
 
 				for _, sfd := range tc.data {
