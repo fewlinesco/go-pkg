@@ -14,12 +14,12 @@ import (
 func TestSandboxDatabase(t *testing.T) {
 
 	type testData struct {
-		ID    string `database:"id"`
-		Value string `database:"value"`
+		ID   string `database:"id"`
+		Code string `database:"code"`
 	}
 
-	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Value: "first_value"}
-	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Value: "second_value"}
+	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Code: "first_value"}
+	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value"}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -48,7 +48,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 			firstData,
 		)
 
@@ -88,9 +88,9 @@ func TestSandboxDatabase(t *testing.T) {
 
 				_, err = db.ExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES ($1, $2);`,
+					`INSERT INTO test_data (id, code) VALUES ($1, $2);`,
 					tc.data.ID,
-					tc.data.Value,
+					tc.data.Code,
 				)
 
 				if tc.shouldErr {
@@ -103,19 +103,28 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 				}
 
-				sqlxDB, err := connect(cfg)
-				defer sqlxDB.Close()
-
 				if tc.shouldFindData {
 					var getTestData testData
-					err = sqlxDB.GetContext(context.Background(), &getTestData, `SELECT * FROM test_data WHERE ID = $1`, tc.data.ID)
+					err = db.GetContext(context.Background(), &getTestData, `SELECT * FROM test_data WHERE ID = $1`, tc.data.ID)
 					if err != nil {
 						t.Fatalf("could not get inserted data : %#v", err)
 					}
 
-					if getTestData.ID != tc.data.ID || getTestData.Value != tc.data.Value {
-						t.Fatalf("expected test data with ID : %s and Value: %s, but got %#v", tc.data.ID, tc.data.Value, getTestData)
+					if getTestData.ID != tc.data.ID || getTestData.Code != tc.data.Code {
+						t.Fatalf("expected test data with ID : %s and Code: %s, but got %#v", tc.data.ID, tc.data.Code, getTestData)
 					}
+				}
+
+				sqlxDB, err := connect(cfg)
+				defer sqlxDB.Close()
+				var selectTestData []testData
+				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				if err != nil {
+					t.Fatalf("could not select test_data: %#v", err)
+				}
+
+				if (len(selectTestData) != 1) || (selectTestData[0].ID != firstData.ID) || (selectTestData[0].Code != firstData.Code) {
+					t.Fatalf("select all values from testdata should have returned [%#v] but got %#v", firstData, selectTestData)
 				}
 			})
 		}
@@ -137,8 +146,8 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
-			testData{ID: firstData.ID, Value: firstData.Value},
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			testData{ID: firstData.ID, Code: firstData.Code},
 		)
 
 		if err != nil {
@@ -177,7 +186,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 				_, err = db.NamedExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES (:id, :value);`,
+					`INSERT INTO test_data (id, code) VALUES (:id, :code);`,
 					tc.data,
 				)
 
@@ -191,19 +200,28 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 				}
 
-				sqlxDB, err := connect(cfg)
-				defer sqlxDB.Close()
-
 				if tc.shouldFindData {
 					var getTestData testData
-					err = sqlxDB.GetContext(context.Background(), &getTestData, `SELECT * FROM test_data WHERE ID = $1`, tc.data.ID)
+					err = db.GetContext(context.Background(), &getTestData, `SELECT * FROM test_data WHERE ID = $1`, tc.data.ID)
 					if err != nil {
 						t.Fatalf("could not get inserted data : %#v", err)
 					}
 
-					if getTestData.ID != tc.data.ID || getTestData.Value != tc.data.Value {
-						t.Fatalf("expected test data with ID : %s and Value: %s, but got %#v", tc.data.ID, tc.data.Value, getTestData)
+					if getTestData.ID != tc.data.ID || getTestData.Code != tc.data.Code {
+						t.Fatalf("expected test data with ID : %s and Code: %s, but got %#v", tc.data.ID, tc.data.Code, getTestData)
 					}
+				}
+
+				sqlxDB, err := connect(cfg)
+				defer sqlxDB.Close()
+				var selectTestData []testData
+				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				if err != nil {
+					t.Fatalf("could not select test_data: %#v", err)
+				}
+
+				if (len(selectTestData) != 1) || (selectTestData[0].ID != firstData.ID) || (selectTestData[0].Code != firstData.Code) {
+					t.Fatalf("select all values from testdata should have returned [%#v] but got %#v", firstData, selectTestData)
 				}
 			})
 		}
@@ -224,8 +242,8 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
-			testData{ID: firstData.ID, Value: firstData.Value},
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			testData{ID: firstData.ID, Code: firstData.Code},
 		)
 
 		if err != nil {
@@ -275,8 +293,8 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				if tc.shouldFindData {
-					if getTestData.ID != tc.data.ID || getTestData.Value != tc.data.Value {
-						t.Fatalf("expected test data with ID : %s and Value: %s, but got %#v", tc.data.ID, tc.data.Value, getTestData)
+					if getTestData.ID != tc.data.ID || getTestData.Code != tc.data.Code {
+						t.Fatalf("expected test data with ID : %s and Code: %s, but got %#v", tc.data.ID, tc.data.Code, getTestData)
 					}
 				} else {
 					if !(reflect.Zero(reflect.TypeOf(getTestData)).Interface() == getTestData) {
@@ -302,7 +320,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 			firstData,
 		)
 
@@ -312,7 +330,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 			secondData,
 		)
 
@@ -435,7 +453,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 				},
@@ -447,7 +465,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						firstData,
 					)
 				},
@@ -459,7 +477,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Rollback()
@@ -472,7 +490,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Commit()
@@ -493,7 +511,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 				_, err = sqlxDB.NamedExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+					`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 					firstData,
 				)
 
@@ -574,7 +592,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 				},
@@ -586,7 +604,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						firstData,
 					)
 				},
@@ -598,7 +616,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Commit()
@@ -611,7 +629,7 @@ func TestSandboxDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Rollback()
@@ -632,7 +650,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 				_, err = sqlxDB.NamedExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+					`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 					firstData,
 				)
 

@@ -54,7 +54,6 @@ func (db *sandboxDB) NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDri
 }
 
 func (db *sandboxDB) Begin() (Tx, error) {
-	fmt.Println("BEGIN")
 	db.tx.MustExec("SAVEPOINT go_pkg_database_sandbox_savepoint;")
 
 	return &sandboxTx{tx: db.tx}, nil
