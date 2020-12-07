@@ -45,7 +45,7 @@ type Event struct {
 // source: name of the application that created the event
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
-func CreatePublisherEvent(ctx context.Context, tx *database.Tx, subject string, eventType string, source string, dataschema string, data interface{}) (Event, error) {
+func CreatePublisherEvent(ctx context.Context, tx database.Tx, subject string, eventType string, source string, dataschema string, data interface{}) (Event, error) {
 	rawData, err := json.Marshal(data)
 	if err != nil {
 		return Event{}, fmt.Errorf("can't marshal event: %w", err)

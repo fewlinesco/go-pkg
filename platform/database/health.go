@@ -10,25 +10,25 @@ import (
 )
 
 // HealthCheck is a generic health checker in charge of checking the database availability
-func HealthCheck(db *DB) web.HealthzChecker {
+func HealthCheck(db DB) web.HealthzChecker {
 	return genericHealthCheck("database")(db)
 }
 
 // ReadDBHealthCheck is a generic health checker in charge of checking the read database availability
-func ReadDBHealthCheck(db *DB) web.HealthzChecker {
+func ReadDBHealthCheck(db DB) web.HealthzChecker {
 	return genericHealthCheck("read-database")(db)
 }
 
 // WriteDBHealthCheck is a generic health checker in charge of checking the write database availability
-func WriteDBHealthCheck(db *DB) web.HealthzChecker {
+func WriteDBHealthCheck(db DB) web.HealthzChecker {
 	return genericHealthCheck("write-database")(db)
 }
 
-func genericHealthCheck(databaseName string) func(db *DB) web.HealthzChecker {
+func genericHealthCheck(databaseName string) func(db DB) web.HealthzChecker {
 	spanName := fmt.Sprintf("%s.HealthChecker", databaseName)
 	description := fmt.Sprintf("Check the availability of the service's %s", databaseName)
 
-	return func(db *DB) web.HealthzChecker {
+	return func(db DB) web.HealthzChecker {
 		return func(ctx context.Context) web.HealthzStatus {
 			ctx, span := trace.StartSpan(ctx, spanName)
 			span.End()

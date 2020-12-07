@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GuiaBolso/darwin"
 	"github.com/fewlinesco/go-pkg/platform/metrics"
 
 	"github.com/jmoiron/sqlx"
@@ -59,18 +60,43 @@ var MetricViews = []*metrics.View{
 	},
 }
 
+// DB is a generic interface for database interaction
+type DB interface {
+	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
+	Begin() (Tx, error)
+	Close() error
+	SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error)
+	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
+	PingContext(ctx context.Context) error
+}
+
+// Tx is a generic interface for database transactions
+type Tx interface {
+	SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error)
+	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
+	Commit() error
+	Rollback() error
+}
+
 // DB represents the database connection
-type DB struct {
+type prodDB struct {
 	db *sqlx.DB
 }
 
 // Tx represents a database transaction
-type Tx struct {
+type prodTx struct {
 	tx *sqlx.Tx
 }
 
-// Connect configures the driver and opens a database connection
-func Connect(config Config) (*DB, error) {
+func (db *prodDB) NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver {
+	return darwin.NewGenericDriver(db.db.DB, darwin.PostgresDialect{})
+}
+
+func connect(config Config) (*sqlx.DB, error) {
 	if config.URL == "" {
 		options := make(url.Values)
 		for key, value := range config.Options {
@@ -86,12 +112,17 @@ func Connect(config Config) (*DB, error) {
 		}
 		config.URL = connectionURL.String()
 	}
-	db, err := sqlx.Connect(config.Driver, config.URL)
+	return sqlx.Connect(config.Driver, config.URL)
+}
+
+// Connect configures the driver and opens a database connection
+func Connect(config Config) (DB, error) {
+	db, err := connect(config)
 	if err != nil {
 		return nil, fmt.Errorf("can't connect to database: %v", err)
 	}
 
-	return &DB{db: db}, nil
+	return &prodDB{db: db}, nil
 }
 
 // IsUniqueConstraintError is a helper checking the current database error and returnning true if it's a PG unique index
@@ -151,22 +182,22 @@ func GetCurrentTimestamp() time.Time {
 }
 
 // Begin starts a new transaction
-func (db *DB) Begin() (*Tx, error) {
+func (db *prodDB) Begin() (Tx, error) {
 	tx, err := db.db.Beginx()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Tx{tx: tx}, nil
+	return &prodTx{tx: tx}, nil
 }
 
 // Close closes the connection to the database
-func (db *DB) Close() error {
+func (db *prodDB) Close() error {
 	return db.db.Close()
 }
 
 // SelectContext fetches a slice of elements from database.
-func (db *DB) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+func (db *prodDB) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
@@ -179,7 +210,7 @@ func (db *DB) SelectContext(ctx context.Context, dest interface{}, statement str
 }
 
 // GetContext fetches one elements from database.
-func (db *DB) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+func (db *prodDB) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
@@ -192,7 +223,7 @@ func (db *DB) GetContext(ctx context.Context, dest interface{}, statement string
 }
 
 // ExecContext executes any SQL query to the server. It's mostly use for insert/update commands
-func (db *DB) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
+func (db *prodDB) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
 	var (
 		response sql.Result
 		err      error
@@ -208,7 +239,7 @@ func (db *DB) ExecContext(ctx context.Context, statement string, arg ...interfac
 }
 
 // NamedExecContext same as ExecContext but use name arguments in the statement and a struct as parameter
-func (db *DB) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
+func (db *prodDB) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
 	var (
 		response sql.Result
 		err      error
@@ -224,7 +255,7 @@ func (db *DB) NamedExecContext(ctx context.Context, statement string, arg interf
 }
 
 // PingContext pings the database to make sure the connection is still open and working
-func (db *DB) PingContext(ctx context.Context) error {
+func (db *prodDB) PingContext(ctx context.Context) error {
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
@@ -237,17 +268,17 @@ func (db *DB) PingContext(ctx context.Context) error {
 }
 
 // Commit persists the transaction
-func (tx *Tx) Commit() error {
+func (tx *prodTx) Commit() error {
 	return tx.tx.Commit()
 }
 
 // Rollback aborts the transaction
-func (tx *Tx) Rollback() error {
+func (tx *prodTx) Rollback() error {
 	return tx.tx.Rollback()
 }
 
 // GetContext same as db.GetContext but for the current transction
-func (tx *Tx) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+func (tx *prodTx) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
@@ -260,7 +291,7 @@ func (tx *Tx) GetContext(ctx context.Context, dest interface{}, statement string
 }
 
 // NamedExecContext same as db.NamedExecContext but for the current transction
-func (tx *Tx) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
+func (tx *prodTx) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
 	var (
 		response sql.Result
 		err      error
@@ -276,7 +307,7 @@ func (tx *Tx) NamedExecContext(ctx context.Context, statement string, arg interf
 }
 
 // SelectContext fetches a slice of elements from database.
-func (tx *Tx) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+func (tx *prodTx) SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
@@ -289,7 +320,7 @@ func (tx *Tx) SelectContext(ctx context.Context, dest interface{}, statement str
 }
 
 // ExecContext executes any SQL query to the server. It's mostly use for insert/update commands
-func (tx *Tx) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
+func (tx *prodTx) ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error) {
 	var (
 		response sql.Result
 		err      error

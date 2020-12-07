@@ -1,0 +1,10 @@
+{
+  "driver": "postgres",
+  "username": "postgres",
+  "password": "postgres",
+  "database": "postgres",
+  "port": 29999,
+  "options": {
+    "sslmode": "disable"
+  }
+}
