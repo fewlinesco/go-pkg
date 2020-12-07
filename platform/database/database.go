@@ -60,6 +60,7 @@ var MetricViews = []*metrics.View{
 	},
 }
 
+// DB is a generic interface for database interaction
 type DB interface {
 	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
 	Begin() (Tx, error)
@@ -71,6 +72,7 @@ type DB interface {
 	PingContext(ctx context.Context) error
 }
 
+// Tx is a generic interface for database transactions
 type Tx interface {
 	SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
