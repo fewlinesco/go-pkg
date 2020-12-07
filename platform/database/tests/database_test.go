@@ -660,7 +660,7 @@ func TestProdDatabase(t *testing.T) {
 				err = tx.Rollback()
 				if tc.shouldErr {
 					if err == nil {
-						t.Fatalf("commit should throw an error but err was nil")
+						t.Fatalf("rollback should throw an error but err was nil")
 					}
 				} else {
 					if err != nil {
