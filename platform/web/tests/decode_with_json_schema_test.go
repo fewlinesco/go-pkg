@@ -21,9 +21,10 @@ type decodeWithJSONSchemaTestData struct {
 }
 
 type expectedModel struct {
-	ID       string `json:"id"`
-	Code     string `json:"code"`
-	DataType string `json:"datatype"`
+	ID       string            `json:"id"`
+	Code     string            `json:"code"`
+	DataType string            `json:"datatype"`
+	Name     map[string]string `json:"name"`
 }
 
 func TestDecodeWithJSONSchema(t *testing.T) {
@@ -113,6 +114,37 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
 				"id":   "id is required",
 				"code": "Invalid type. Expected: string, given: integer",
+			}),
+		},
+		{
+			Name:           "It can properly validate the localized string",
+			Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"en-US": "this is a test", "fr-FR": "another test"}}`,
+			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
+			DecoderOptions: web.DecoderOptions{},
+			ExpectedError:  nil,
+			ExpectedOutcome: expectedModel{
+				ID:       "d43c45b0-f420-4de9-8745-6e3840ab39fd",
+				Code:     "code",
+				DataType: "integer",
+				Name:     map[string]string{"en-US": "this is a test", "fr-FR": "another test"},
+			},
+		},
+		{
+			Name:           "It throws an error when a required nested property is missing",
+			Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"fr-FR": "another test"}}`,
+			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
+			DecoderOptions: web.DecoderOptions{},
+			ExpectedError:  web.NewErrBadRequestResponse(web.ErrorDetails{
+				"name": "en-US is required",
+			}),
+		},
+		{
+			Name:           "It throws an error when a required nested property is missing",
+			Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"en-US": "this is a test", "French": "ceci est une test"}}`,
+			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
+			DecoderOptions: web.DecoderOptions{},
+			ExpectedError:  web.NewErrInvalidRequestBodyContent(web.ErrorDetails{
+				"name": "Additional property French is not allowed",
 			}),
 		},
 	}
