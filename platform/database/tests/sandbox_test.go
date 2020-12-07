@@ -523,7 +523,6 @@ func TestSandboxDatabase(t *testing.T) {
 				if err != nil {
 					t.Fatalf("could not connect to the database: %#v", err)
 				}
-				defer db.Close()
 
 				tx, err := db.Begin()
 				if err != nil {
@@ -543,9 +542,9 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				var selectTestData []testData
-				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				err = db.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
 				if err != nil {
-					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
+					t.Fatalf("could not fetch data from the sandboxedDB: %#v", err)
 				}
 
 				for _, sfd := range tc.data {
@@ -570,6 +569,19 @@ func TestSandboxDatabase(t *testing.T) {
 					if !found {
 						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
 					}
+				}
+				db.Close()
+
+				sqlxDB, err = connect(cfg)
+				defer sqlxDB.Close()
+				var previouslyInsertedData []testData
+				err = sqlxDB.SelectContext(context.Background(), &previouslyInsertedData, `SELECT * FROM test_data;`)
+				if err != nil {
+					t.Fatalf("could not select test_data: %#v", err)
+				}
+
+				if (len(previouslyInsertedData) != 1) || (previouslyInsertedData[0].ID != firstData.ID) || (previouslyInsertedData[0].Code != firstData.Code) {
+					t.Fatalf("select all values from testdata should have returned [%#v] but got %#v", firstData, previouslyInsertedData)
 				}
 			})
 		}
@@ -662,7 +674,6 @@ func TestSandboxDatabase(t *testing.T) {
 				if err != nil {
 					t.Fatalf("could not connect to the database: %#v", err)
 				}
-				defer db.Close()
 
 				tx, err := db.Begin()
 				if err != nil {
@@ -682,7 +693,7 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				var selectTestData []testData
-				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				err = db.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
 				if err != nil {
 					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
 				}
@@ -710,6 +721,21 @@ func TestSandboxDatabase(t *testing.T) {
 						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
 					}
 				}
+
+				db.Close()
+
+				sqlxDB, err = connect(cfg)
+				defer sqlxDB.Close()
+				var previouslyInsertedData []testData
+				err = sqlxDB.SelectContext(context.Background(), &previouslyInsertedData, `SELECT * FROM test_data;`)
+				if err != nil {
+					t.Fatalf("could not select test_data: %#v", err)
+				}
+
+				if (len(previouslyInsertedData) != 1) || (previouslyInsertedData[0].ID != firstData.ID) || (previouslyInsertedData[0].Code != firstData.Code) {
+					t.Fatalf("select all values from testdata should have returned [%#v] but got %#v", firstData, previouslyInsertedData)
+				}
+
 			})
 		}
 		for _, tc := range tcs {
