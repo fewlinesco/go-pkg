@@ -16,7 +16,6 @@ type sandboxDB struct {
 
 type sandboxTx struct {
 	tx                    *sqlx.Tx
-	savepointName         string
 	rollBackedOrCommitted bool
 }
 

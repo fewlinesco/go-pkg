@@ -116,6 +116,9 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				sqlxDB, err := connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect sqlx DB: %#v", err)
+				}
 				defer sqlxDB.Close()
 				var selectTestData []testData
 				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
@@ -213,6 +216,10 @@ func TestSandboxDatabase(t *testing.T) {
 				}
 
 				sqlxDB, err := connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect sqlx DB: %#v", err)
+				}
+
 				defer sqlxDB.Close()
 				var selectTestData []testData
 				err = sqlxDB.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
@@ -573,6 +580,9 @@ func TestSandboxDatabase(t *testing.T) {
 				db.Close()
 
 				sqlxDB, err = connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect sqlx DB: %#v", err)
+				}
 				defer sqlxDB.Close()
 				var previouslyInsertedData []testData
 				err = sqlxDB.SelectContext(context.Background(), &previouslyInsertedData, `SELECT * FROM test_data;`)
@@ -725,6 +735,10 @@ func TestSandboxDatabase(t *testing.T) {
 				db.Close()
 
 				sqlxDB, err = connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect sqlx DB: %#v", err)
+				}
+
 				defer sqlxDB.Close()
 				var previouslyInsertedData []testData
 				err = sqlxDB.SelectContext(context.Background(), &previouslyInsertedData, `SELECT * FROM test_data;`)
