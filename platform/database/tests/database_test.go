@@ -395,6 +395,10 @@ func TestProdDatabase(t *testing.T) {
 					}
 				}
 
+				if len(tc.shouldFindData) != len(selectTestData) {
+					t.Fatalf("expected shouldFindData and selectTestData to have the same length but got tc.shouldFindData: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
+				}
+
 				for _, sfd := range tc.shouldFindData {
 					found := false
 					for _, std := range selectTestData {
@@ -404,18 +408,6 @@ func TestProdDatabase(t *testing.T) {
 					}
 					if !found {
 						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
-					}
-				}
-
-				for _, std := range selectTestData {
-					found := false
-					for _, sfd := range tc.shouldFindData {
-						if std.ID == sfd.ID {
-							found = true
-						}
-					}
-					if !found {
-						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.shouldFindData)
 					}
 				}
 			})
@@ -535,6 +527,10 @@ func TestProdDatabase(t *testing.T) {
 					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
 				}
 
+				if len(tc.data) != len(selectTestData) {
+					t.Fatalf("expected data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.data, selectTestData)
+				}
+
 				for _, sfd := range tc.data {
 					found := false
 					for _, std := range selectTestData {
@@ -544,18 +540,6 @@ func TestProdDatabase(t *testing.T) {
 					}
 					if !found {
 						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
-					}
-				}
-
-				for _, std := range selectTestData {
-					found := false
-					for _, sfd := range tc.data {
-						if std.ID == sfd.ID {
-							found = true
-						}
-					}
-					if !found {
-						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
 					}
 				}
 			})
@@ -674,6 +658,10 @@ func TestProdDatabase(t *testing.T) {
 					t.Fatalf("could not fetch data from the sqlxDB: %#v", err)
 				}
 
+				if len(tc.data) != len(selectTestData) {
+					t.Fatalf("expected data and selectTestData to have the same length but got tc.data: %#v, selectTestData: %#v", tc.data, selectTestData)
+				}
+
 				for _, sfd := range tc.data {
 					found := false
 					for _, std := range selectTestData {
@@ -683,18 +671,6 @@ func TestProdDatabase(t *testing.T) {
 					}
 					if !found {
 						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
-					}
-				}
-
-				for _, std := range selectTestData {
-					found := false
-					for _, sfd := range tc.data {
-						if std.ID == sfd.ID {
-							found = true
-						}
-					}
-					if !found {
-						t.Fatalf("found %#v in selectTestData which is not in %#v", std, tc.data)
 					}
 				}
 			})
