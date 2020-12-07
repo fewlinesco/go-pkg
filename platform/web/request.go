@@ -73,19 +73,20 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 		requestContentErrorDetails := make(ErrorDetails)
 
 		for _, desc := range result.Errors() {
-			if desc.Type() == "required" {
-				property, ok := desc.Details()["property"]
-				if !ok {
-					property = desc.Field()
+			propertyName := desc.Field()
+			if propertyName == "(root)" {
+				details, ok := desc.Details()["property"]
+				if ok {
+					propertyName = fmt.Sprintf("%v", details)
 				}
+			}
 
-				requiredProperty := fmt.Sprintf("%s", property)
-
-				requiredPropertyErrors[requiredProperty] = desc.Description()
+			if desc.Type() == "required" {
+				requiredPropertyErrors[propertyName] = desc.Description()
 				continue
 			}
 
-			requestContentErrorDetails[desc.Field()] = desc.Description()
+			requestContentErrorDetails[propertyName] = desc.Description()
 		}
 
 		if len(requiredPropertyErrors) > 0 {
