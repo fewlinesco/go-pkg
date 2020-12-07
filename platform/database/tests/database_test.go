@@ -664,7 +664,7 @@ func TestProdDatabase(t *testing.T) {
 					}
 				} else {
 					if err != nil {
-						t.Fatalf("commit shouldn't return an error but returned: %#v", err)
+						t.Fatalf("rollback shouldn't return an error but returned: %#v", err)
 					}
 				}
 
