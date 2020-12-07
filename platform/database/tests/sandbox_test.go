@@ -291,7 +291,7 @@ func TestSandboxDatabase(t *testing.T) {
 				err = db.GetContext(context.Background(), &getTestData, `SELECT * FROM test_data WHERE ID = $1`, tc.data.ID)
 				if tc.shouldErr {
 					if err == nil {
-						t.Fatalf("erroring exec don't return an error (most likely panics)")
+						t.Fatalf("erroring get don't return an error (most likely panics)")
 					}
 				} else {
 					if err != nil {
