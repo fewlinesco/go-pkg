@@ -134,7 +134,7 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"fr-FR": "another test"}}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectedError:  web.NewErrBadRequestResponse(web.ErrorDetails{
+			ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
 				"name": "en-US is required",
 			}),
 		},
@@ -143,7 +143,7 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"en-US": "this is a test", "French": "ceci est une test"}}`,
 			JSONSchemaPath: "../../../testdata/json-schema/json_schema_with_definition.json",
 			DecoderOptions: web.DecoderOptions{},
-			ExpectedError:  web.NewErrInvalidRequestBodyContent(web.ErrorDetails{
+			ExpectedError: web.NewErrInvalidRequestBodyContent(web.ErrorDetails{
 				"name": "Additional property French is not allowed",
 			}),
 		},
