@@ -13,12 +13,12 @@ import (
 
 func TestProdDatabase(t *testing.T) {
 	type testData struct {
-		ID    string `database:"id"`
-		Value string `database:"value"`
+		ID   string `database:"id"`
+		Code string `database:"code"`
 	}
 
-	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Value: "first_value"}
-	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Value: "second_value"}
+	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Code: "first_value"}
+	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value"}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -47,7 +47,7 @@ func TestProdDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 			firstData,
 		)
 
@@ -87,9 +87,9 @@ func TestProdDatabase(t *testing.T) {
 
 				_, err = db.ExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES ($1, $2);`,
+					`INSERT INTO test_data (id, code) VALUES ($1, $2);`,
 					tc.data.ID,
-					tc.data.Value,
+					tc.data.Code,
 				)
 
 				if tc.shouldErr {
@@ -112,8 +112,8 @@ func TestProdDatabase(t *testing.T) {
 						t.Fatalf("could not get inserted data : %#v", err)
 					}
 
-					if getTestData.ID != tc.data.ID || getTestData.Value != tc.data.Value {
-						t.Fatalf("expected test data with ID : %s and Value: %s, but got %#v", tc.data.ID, tc.data.Value, getTestData)
+					if getTestData.ID != tc.data.ID || getTestData.Code != tc.data.Code {
+						t.Fatalf("expected test data with ID : %s and Code: %s, but got %#v", tc.data.ID, tc.data.Code, getTestData)
 					}
 				}
 			})
@@ -136,8 +136,8 @@ func TestProdDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
-			testData{ID: firstData.ID, Value: firstData.Value},
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			testData{ID: firstData.ID, Code: firstData.Code},
 		)
 
 		if err != nil {
@@ -176,7 +176,7 @@ func TestProdDatabase(t *testing.T) {
 
 				_, err = db.NamedExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES (:id, :value);`,
+					`INSERT INTO test_data (id, code) VALUES (:id, :code);`,
 					tc.data,
 				)
 
@@ -200,8 +200,8 @@ func TestProdDatabase(t *testing.T) {
 						t.Fatalf("could not get inserted data : %#v", err)
 					}
 
-					if getTestData.ID != tc.data.ID || getTestData.Value != tc.data.Value {
-						t.Fatalf("expected test data with ID : %s and Value: %s, but got %#v", tc.data.ID, tc.data.Value, getTestData)
+					if getTestData.ID != tc.data.ID || getTestData.Code != tc.data.Code {
+						t.Fatalf("expected test data with ID : %s and Code: %s, but got %#v", tc.data.ID, tc.data.Code, getTestData)
 					}
 				}
 			})
@@ -223,8 +223,8 @@ func TestProdDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
-			testData{ID: firstData.ID, Value: firstData.Value},
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			testData{ID: firstData.ID, Code: firstData.Code},
 		)
 
 		if err != nil {
@@ -274,8 +274,8 @@ func TestProdDatabase(t *testing.T) {
 				}
 
 				if tc.shouldFindData {
-					if getTestData.ID != tc.data.ID || getTestData.Value != tc.data.Value {
-						t.Fatalf("expected test data with ID : %s and Value: %s, but got %#v", tc.data.ID, tc.data.Value, getTestData)
+					if getTestData.ID != tc.data.ID || getTestData.Code != tc.data.Code {
+						t.Fatalf("expected test data with ID : %s and Code: %s, but got %#v", tc.data.ID, tc.data.Code, getTestData)
 					}
 				} else {
 					if !(reflect.Zero(reflect.TypeOf(getTestData)).Interface() == getTestData) {
@@ -301,7 +301,7 @@ func TestProdDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 			firstData,
 		)
 
@@ -311,7 +311,7 @@ func TestProdDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 			secondData,
 		)
 
@@ -434,7 +434,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 				},
@@ -446,7 +446,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						firstData,
 					)
 				},
@@ -458,7 +458,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Rollback()
@@ -471,7 +471,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Commit()
@@ -492,7 +492,7 @@ func TestProdDatabase(t *testing.T) {
 
 				_, err = sqlxDB.NamedExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+					`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 					firstData,
 				)
 
@@ -573,7 +573,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 				},
@@ -585,7 +585,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						firstData,
 					)
 				},
@@ -597,7 +597,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Commit()
@@ -610,7 +610,7 @@ func TestProdDatabase(t *testing.T) {
 				transaction: func(tx database.Tx, t *testing.T) {
 					_, err = tx.NamedExecContext(
 						context.Background(),
-						`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+						`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 						secondData,
 					)
 					tx.Rollback()
@@ -631,7 +631,7 @@ func TestProdDatabase(t *testing.T) {
 
 				_, err = sqlxDB.NamedExecContext(
 					context.Background(),
-					`INSERT INTO test_data (id, value) VALUES (:id, :value)`,
+					`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
 					firstData,
 				)
 
