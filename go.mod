@@ -7,8 +7,8 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.2.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
-	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.2.0
-	github.com/cloudevents/sdk-go/v2 v2.2.0
+	github.com/cloudevents/sdk-go/protocol/nats/v2 v2.2.0 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.2.0 // indirect
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/fileutil v0.0.0-20181122101858-4d67cfea8c87 // indirect
 	github.com/cznic/golex v0.0.0-20181122101858-9c343928389c // indirect
@@ -26,12 +26,12 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
-	github.com/jmoiron/sqlx v1.2.0
+	github.com/jmoiron/sqlx v1.2.1-0.20201120164427-00c6e74d816a
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lib/pq v1.8.0
 	github.com/mattn/go-sqlite3 v1.14.1 // indirect
 	github.com/nats-io/jwt v1.0.1 // indirect
-	github.com/nats-io/nats.go v1.10.0
+	github.com/nats-io/nats.go v1.10.0 // indirect
 	github.com/nats-io/nkeys v0.2.0 // indirect
 	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/prometheus/common v0.13.0 // indirect
