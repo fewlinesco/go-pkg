@@ -66,6 +66,7 @@ type DB interface {
 	Begin() (Tx, error)
 	Close() error
 	SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error)
 	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
@@ -202,6 +203,26 @@ func (db *prodDB) SelectContext(ctx context.Context, dest interface{}, statement
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
 		err = db.db.SelectContext(ctx, dest, statement, args...)
+	})
+
+	metrics.RecordError(ctx, metricQueryErrorTotal, err)
+
+	return err
+}
+
+// SelectMultipleContext fetches a slice of elements from database.
+func (db *prodDB) SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+	var err error
+
+	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
+		query, queryArguments, err := sqlx.In(statement, args...)
+		if err != nil {
+			err = fmt.Errorf("an error occured whilst preparing the statement: %v", err)
+			return
+		}
+
+		query = db.db.Rebind(query)
+		err = db.db.SelectContext(ctx, dest, query, queryArguments...)
 	})
 
 	metrics.RecordError(ctx, metricQueryErrorTotal, err)
