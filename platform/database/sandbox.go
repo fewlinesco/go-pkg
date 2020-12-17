@@ -65,6 +65,17 @@ func (db *sandboxDB) SelectContext(ctx context.Context, dest interface{}, statem
 
 }
 
+func (db *sandboxDB) SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
+	query, queryArguments, err := sqlx.In(statement, args...)
+	if err != nil {
+		return fmt.Errorf("an error occured whilst preparing the statement: %v", err)
+	}
+
+	query = db.db.Rebind(query)
+
+	return db.db.SelectContext(ctx, dest, query, queryArguments)
+}
+
 func (db *sandboxDB) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 
 	return db.tx.GetContext(ctx, dest, statement, args...)

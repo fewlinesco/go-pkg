@@ -20,10 +20,6 @@ github.com/alecthomas/units
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
-# github.com/cloudevents/sdk-go/protocol/nats/v2 v2.2.0
-## explicit
-# github.com/cloudevents/sdk-go/v2 v2.2.0
-## explicit
 # github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d
 ## explicit
 # github.com/cznic/fileutil v0.0.0-20181122101858-4d67cfea8c87
@@ -55,8 +51,6 @@ github.com/go-playground/locales/en
 # github.com/go-playground/universal-translator v0.17.0
 ## explicit
 github.com/go-playground/universal-translator
-# github.com/go-sql-driver/mysql v1.5.0
-## explicit
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.4.2
@@ -83,6 +77,8 @@ github.com/jmoiron/sqlx/reflectx
 github.com/jmoiron/sqlx/types
 # github.com/konsorten/go-windows-terminal-sequences v1.0.3
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/kr/text v0.2.0
+## explicit
 # github.com/leodido/go-urn v1.2.0
 ## explicit
 github.com/leodido/go-urn
@@ -95,13 +91,7 @@ github.com/lib/pq/scram
 ## explicit
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/nats-io/jwt v1.0.1
-## explicit
-# github.com/nats-io/nats.go v1.10.0
-## explicit
-# github.com/nats-io/nkeys v0.2.0
-## explicit
-# github.com/onsi/ginkgo v1.14.0
+# github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
 ## explicit
 # github.com/prometheus/client_golang v1.7.1
 github.com/prometheus/client_golang/prometheus
@@ -173,8 +163,6 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-## explicit
 # golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 ## explicit
 golang.org/x/lint
@@ -255,6 +243,8 @@ google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/alecthomas/kingpin.v2 v2.2.6
 gopkg.in/alecthomas/kingpin.v2
+# gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
+## explicit
 # gopkg.in/go-playground/validator.v9 v9.31.0
 ## explicit
 gopkg.in/go-playground/validator.v9
