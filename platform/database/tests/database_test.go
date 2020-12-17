@@ -490,6 +490,15 @@ func TestProdDatabase(t *testing.T) {
 				shouldFindData: []testData{},
 				shouldErr:      false,
 			},
+			{
+				name: "when the condition is faulty, it does not populate the slice and return an error",
+				condition: &struct {
+					sql string
+					arg []string
+				}{sql: "WHERE non_exisiting_field IN (?) ", arg: []string{firstData.ID}},
+				shouldFindData: []testData{},
+				shouldErr:      true,
+			},
 		}
 
 		doTest := func(tc testCase, t *testing.T) {

@@ -217,8 +217,8 @@ func (db *prodDB) SelectMultipleContext(ctx context.Context, dest interface{}, s
 	var err error
 
 	metrics.RecordElapsedTimeInMilliseconds(ctx, metricQueryLatencyMs, func() {
-		query, queryArguments, err := sqlx.In(statement, args...)
-		if err != nil {
+		query, queryArguments, statementErr := sqlx.In(statement, args...)
+		if statementErr != nil {
 			err = fmt.Errorf("an error occured whilst preparing the statement: %v", err)
 			return
 		}
