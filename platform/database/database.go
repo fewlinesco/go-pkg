@@ -210,7 +210,9 @@ func (db *prodDB) SelectContext(ctx context.Context, dest interface{}, statement
 	return err
 }
 
-// SelectMultipleContext fetches a slice of elements from database.
+// SelectMultipleContext fetches a slice of elements from database which match any value from a list.
+// This method allows you to write a query with an `in` statement eg:
+// SELECT * from table WHERE id IN (?)
 func (db *prodDB) SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
 	var err error
 
