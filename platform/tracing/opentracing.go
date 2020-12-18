@@ -72,8 +72,12 @@ func AddAttributeWithDisclosedData(span *trace.Span, key string, value string) {
 func MarkAsError(span *trace.Span, reason string) {
 	span.AddAttributes(
 		trace.BoolAttribute("error", true),
-		trace.StringAttribute("message", reason),
 	)
+	// status code 2 is understood by the otel-collector as an error and is necessary to have our spans marked as errors after translation to the otel format
+	span.SetStatus(trace.Status{
+		Code:    2,
+		Message: reason,
+	})
 }
 
 // StartSpan creates a new span with the provided name
