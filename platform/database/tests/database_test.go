@@ -418,6 +418,137 @@ func TestProdDatabase(t *testing.T) {
 		}
 	})
 
+	t.Run("SelectMultipleContext previously inserted data", func(t *testing.T) {
+		cleanup := migrate(cfg, t)
+		defer cleanup()
+		sqlxDB, err := connect(cfg)
+		if err != nil {
+			t.Fatalf("could not create sqlx connection: %#v", err)
+		}
+		defer sqlxDB.Close()
+
+		_, err = sqlxDB.NamedExecContext(
+			context.Background(),
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			firstData,
+		)
+
+		if err != nil {
+			t.Fatalf("cannot setup test: %#v", err)
+		}
+
+		_, err = sqlxDB.NamedExecContext(
+			context.Background(),
+			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			secondData,
+		)
+
+		if err != nil {
+			t.Fatalf("cannot setup test: %#v", err)
+		}
+
+		type testCase struct {
+			name      string
+			condition *struct {
+				sql string
+				arg []string
+			}
+			shouldFindData []testData
+			shouldErr      bool
+		}
+
+		tcs := []testCase{
+			{
+				name:           "when no condition is provided, it gets all the data",
+				shouldFindData: []testData{firstData, secondData},
+				shouldErr:      false,
+			},
+			{
+				name: "when a condition is provided it only gets the requested data",
+				condition: &struct {
+					sql string
+					arg []string
+				}{sql: "WHERE id IN (?)", arg: []string{firstData.ID}},
+				shouldFindData: []testData{firstData},
+				shouldErr:      false,
+			},
+			{
+				name: "when multiple conditions are given it gets all the request data",
+				condition: &struct {
+					sql string
+					arg []string
+				}{sql: "WHERE id IN (?)", arg: []string{firstData.ID, secondData.ID}},
+				shouldFindData: []testData{firstData, secondData},
+				shouldErr:      false,
+			},
+			{
+				name: "when no data is matching the condition, it returns an empty slice with no error",
+				condition: &struct {
+					sql string
+					arg []string
+				}{sql: "WHERE id IN (?)", arg: []string{"3237b466-b3c6-4521-96c5-61022c4a1796"}},
+				shouldFindData: []testData{},
+				shouldErr:      false,
+			},
+			{
+				name: "when the condition is faulty, it does not populate the slice and return an error",
+				condition: &struct {
+					sql string
+					arg []string
+				}{sql: "WHERE non_exisiting_field IN (?) ", arg: []string{firstData.ID}},
+				shouldFindData: []testData{},
+				shouldErr:      true,
+			},
+		}
+
+		doTest := func(tc testCase, t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
+				db, err := database.Connect(cfg)
+				if err != nil {
+					t.Fatalf("could not connect to the database: %#v", err)
+				}
+				defer db.Close()
+
+				var selectTestData []testData
+				if tc.condition == nil {
+					err = db.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
+				} else {
+					err = db.SelectMultipleContext(context.Background(), &selectTestData, fmt.Sprintf("%s %s;", `SELECT * FROM test_data`, tc.condition.sql), tc.condition.arg)
+				}
+
+				if tc.shouldErr {
+					if err == nil {
+						t.Fatalf("erroring exec don't return an error (most likely panics)")
+					}
+				} else {
+					if err != nil {
+						t.Fatalf("could not GetContext %#v", err)
+					}
+				}
+
+				if len(tc.shouldFindData) != len(selectTestData) {
+					t.Fatalf("expected shouldFindData and selectTestData to have the same length but got tc.shouldFindData: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
+				}
+
+				for _, sfd := range tc.shouldFindData {
+					found := false
+					for _, std := range selectTestData {
+						if std.ID == sfd.ID {
+							found = true
+						}
+					}
+					if !found {
+						t.Fatalf("should find %#v in selectTestData but got %#v", sfd, selectTestData)
+					}
+				}
+			})
+		}
+
+		for _, tc := range tcs {
+			doTest(tc, t)
+		}
+	})
+
 	t.Run("Transactions Commit", func(t *testing.T) {
 		type testCase struct {
 			name        string
