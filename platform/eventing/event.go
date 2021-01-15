@@ -75,3 +75,13 @@ func CreatePublisherEvent(ctx context.Context, tx database.Tx, subject string, e
 
 	return ev, nil
 }
+
+// ScheduleBackgroundJob schedules a new background job to be executed.
+// subject: the resource bound to the job (e.g current user id, etc...)
+// jobType: is the name of the job (e.g `user.createAuthorizationResource`)
+// source: name of the application that scheduled the job
+// dataschema: is the JSON-Schema ID of the job (e.g. https://github.com/fewlinesco/myapp/jobs/create_authorization_resource.json)
+// data: is the payload of the job itself
+func ScheduleBackgroundJob(ctx context.Context, tx database.Tx, subject string, jobType string, source string, dataschema string, data interface{}) (Event, error) {
+	return CreatePublisherEvent(ctx, tx, subject, jobType, source, dataschema, data)
+}
