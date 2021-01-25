@@ -811,7 +811,7 @@ func TestProdDatabase(t *testing.T) {
 		}
 	})
 
-	t.Run("Connect to a write database", func(t *testing.T) {
+	t.Run("Connect to a write and read database", func(t *testing.T) {
 		cleanup := migrate(cfg, t)
 		defer cleanup()
 
