@@ -911,11 +911,14 @@ func TestProdDatabase(t *testing.T) {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 
-		sandboxDB, err := database.SandboxConnect(cfg)
+		sandBoxReadDB, sandboxWriteDB, err := database.SandboxReadWriteConnect(cfg)
 		if err != nil {
 			t.Fatalf("could not connect to the sandbox DB: %v", err)
 		}
-		defer sandboxDB.Close()
+		defer func() {
+			sandBoxReadDB.Close()
+			sandboxWriteDB.Close()
+		}()
 
 		thirdData := testData{
 			ID:   "ee320876-5b21-416b-bf4c-8c8a5dfd4727",
@@ -927,19 +930,19 @@ func TestProdDatabase(t *testing.T) {
 			Code: "fourth_data",
 		}
 
-		if err := runInsertTest(sandboxDB, thirdData); err != nil {
+		if err := runInsertTest(sandboxWriteDB, thirdData); err != nil {
 			t.Fatalf("The insert command failed: %v", err)
 		}
 
-		if err := runInsertTransactionTest(sandboxDB, fourthData); err != nil {
+		if err := runInsertTransactionTest(sandboxWriteDB, fourthData); err != nil {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 
-		if err := runSelectTest(sandboxDB, thirdData); err != nil {
+		if err := runSelectTest(sandBoxReadDB, thirdData); err != nil {
 			t.Fatalf("The select command failed: %v", err)
 		}
 
-		if err := runSelectTransactionTest(sandboxDB, fourthData); err != nil {
+		if err := runSelectTransactionTest(sandBoxReadDB, fourthData); err != nil {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 	})
