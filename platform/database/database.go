@@ -155,7 +155,6 @@ func ConnectReadDatabase(config Config) (ReadDB, error) {
 	return Connect(config)
 }
 
-
 // IsUniqueConstraintError is a helper checking the current database error and returnning true if it's a PG unique index
 // error for a specific constraint name
 func IsUniqueConstraintError(err error, constraintName string) bool {

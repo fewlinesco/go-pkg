@@ -848,11 +848,11 @@ func TestProdDatabase(t *testing.T) {
 			return nil
 		}
 
-		if  err := runTest(writeDatabase); err != nil {
+		if err := runTest(writeDatabase); err != nil {
 			t.Fatalf("The insert command failed: %v", err)
 		}
 
-		if  err := runTransactionTest(writeDatabase); err != nil {
+		if err := runTransactionTest(writeDatabase); err != nil {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 
@@ -865,7 +865,7 @@ func TestProdDatabase(t *testing.T) {
 			ctx := context.Background()
 
 			var data testData
-			if err := db.GetContext(ctx, &data , `SELECT * FROM test_data WHERE id = $1`, secondData.ID); err != nil {
+			if err := db.GetContext(ctx, &data, `SELECT * FROM test_data WHERE id = $1`, secondData.ID); err != nil {
 				return fmt.Errorf("can't execute statement: %v", err)
 			}
 
@@ -884,7 +884,7 @@ func TestProdDatabase(t *testing.T) {
 			}
 
 			var data []testData
-			if err := tx.SelectContext(ctx, &data , `SELECT * FROM test_data WHERE id = $1`, firstData.ID); err != nil {
+			if err := tx.SelectContext(ctx, &data, `SELECT * FROM test_data WHERE id = $1`, firstData.ID); err != nil {
 				return fmt.Errorf("can't execute statement: %v", err)
 			}
 
@@ -903,11 +903,11 @@ func TestProdDatabase(t *testing.T) {
 			return nil
 		}
 
-		if  err := runSelectTest(readDatabase); err != nil {
+		if err := runSelectTest(readDatabase); err != nil {
 			t.Fatalf("The select command failed: %v", err)
 		}
 
-		if  err := runSelectTransactionTest(readDatabase); err != nil {
+		if err := runSelectTransactionTest(readDatabase); err != nil {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 	})
