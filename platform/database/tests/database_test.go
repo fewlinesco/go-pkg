@@ -810,4 +810,106 @@ func TestProdDatabase(t *testing.T) {
 			doTest(tc, t)
 		}
 	})
+
+	t.Run("Connect to a write database", func(t *testing.T) {
+		cleanup := migrate(cfg, t)
+		defer cleanup()
+
+		writeDatabase, err := database.ConnectWriteDatabase(cfg)
+		if err != nil {
+			t.Fatalf("could not establish connection to write DB: %#v", err)
+		}
+
+		runTest := func(db database.WriteDB) error {
+			ctx := context.Background()
+
+			if _, err := db.NamedExecContext(ctx, `INSERT INTO test_data (id, code) VALUES (:id, :code)`, firstData); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			return nil
+		}
+
+		runTransactionTest := func(db database.WriteDB) error {
+			ctx := context.Background()
+			tx, err := db.Begin()
+			if err != nil {
+				return fmt.Errorf("can't start transaction: %v", err)
+			}
+
+			if _, err := tx.NamedExecContext(ctx, `INSERT INTO test_data (id, code) VALUES (:id, :code)`, secondData); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			if err := tx.Commit(); err != nil {
+				return fmt.Errorf("can't commit the transaction: %v", err)
+			}
+
+			return nil
+		}
+
+		if  err := runTest(writeDatabase); err != nil {
+			t.Fatalf("The insert command failed: %v", err)
+		}
+
+		if  err := runTransactionTest(writeDatabase); err != nil {
+			t.Fatalf("The transaction command failed: %v", err)
+		}
+
+		readDatabase, err := database.ConnectReadDatabase(cfg)
+		if err != nil {
+			t.Fatalf("could not establish connection to write DB: %#v", err)
+		}
+
+		runSelectTest := func(db database.ReadDB) error {
+			ctx := context.Background()
+
+			var data testData
+			if err := db.GetContext(ctx, &data , `SELECT * FROM test_data WHERE id = $1`, secondData.ID); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			if data.Code != secondData.Code {
+				t.Fatalf("expected to retrieve the second data, but the code does not match. Expected: %s, received: %ss", secondData.Code, data.Code)
+			}
+
+			return nil
+		}
+
+		runSelectTransactionTest := func(db database.ReadDB) error {
+			ctx := context.Background()
+			tx, err := db.Begin()
+			if err != nil {
+				return fmt.Errorf("can't start transaction: %v", err)
+			}
+
+			var data []testData
+			if err := tx.SelectContext(ctx, &data , `SELECT * FROM test_data WHERE id = $1`, firstData.ID); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			if err := tx.Commit(); err != nil {
+				return fmt.Errorf("can't commit the transaction: %v", err)
+			}
+
+			if len(data) != 1 {
+				t.Fatalf("expected to retrieve only 1 item: %v", err)
+			}
+
+			if data[0].Code != firstData.Code {
+				t.Fatalf("Expected the to retrieve the first data element, but the code does not match. Expected: %s, received: %s", firstData.Code, data[0].Code)
+			}
+
+			return nil
+		}
+
+		if  err := runSelectTest(readDatabase); err != nil {
+			t.Fatalf("The select command failed: %v", err)
+		}
+
+		if  err := runSelectTransactionTest(readDatabase); err != nil {
+			t.Fatalf("The transaction command failed: %v", err)
+		}
+	})
+
 }
