@@ -815,10 +815,10 @@ func TestProdDatabase(t *testing.T) {
 		cleanup := migrate(cfg, t)
 		defer cleanup()
 
-		runInsertTest := func(db database.WriteDB, data testData) error {
+		runInsertTest := func(db database.WriteDB, data testData) (err error) {
 			ctx := context.Background()
 
-			if _, err := db.NamedExecContext(ctx, `INSERT INTO test_data (id, code) VALUES (:id, :code)`, data); err != nil {
+			if _, err = db.NamedExecContext(ctx, `INSERT INTO test_data (id, code) VALUES (:id, :code)`, data); err != nil {
 				return fmt.Errorf("can't execute statement: %v", err)
 			}
 
@@ -911,10 +911,11 @@ func TestProdDatabase(t *testing.T) {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 
-		sandboxWriteDB, err := database.SandboxWriteConnect(cfg)
+		sandboxDB, err := database.SandboxConnect(cfg)
 		if err != nil {
 			t.Fatalf("could not connect to the sandbox DB: %v", err)
 		}
+		defer sandboxDB.Close()
 
 		thirdData := testData{
 			ID:   "ee320876-5b21-416b-bf4c-8c8a5dfd4727",
@@ -926,24 +927,19 @@ func TestProdDatabase(t *testing.T) {
 			Code: "fourth_data",
 		}
 
-		if err := runInsertTest(sandboxWriteDB, thirdData); err != nil {
+		if err := runInsertTest(sandboxDB, thirdData); err != nil {
 			t.Fatalf("The insert command failed: %v", err)
 		}
 
-		if err := runInsertTransactionTest(sandboxWriteDB, fourthData); err != nil {
+		if err := runInsertTransactionTest(sandboxDB, fourthData); err != nil {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 
-		sandboxReadDB, err := database.SandboxReadConnect(cfg)
-		if err != nil {
-			t.Fatalf("could not connect to the sandbox DB: %v", err)
-		}
-
-		if err := runSelectTest(sandboxReadDB, thirdData); err != nil {
+		if err := runSelectTest(sandboxDB, thirdData); err != nil {
 			t.Fatalf("The select command failed: %v", err)
 		}
 
-		if err := runSelectTransactionTest(sandboxReadDB, fourthData); err != nil {
+		if err := runSelectTransactionTest(sandboxDB, fourthData); err != nil {
 			t.Fatalf("The transaction command failed: %v", err)
 		}
 	})
