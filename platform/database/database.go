@@ -60,6 +60,7 @@ var MetricViews = []*metrics.View{
 	},
 }
 
+// WriteDB describes a set of methods which can be performed on a DB with write permissions
 type WriteDB interface {
 	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
 	Begin() (Tx, error)
@@ -69,6 +70,7 @@ type WriteDB interface {
 	PingContext(ctx context.Context) error
 }
 
+// Read describes a set of methods which can be performed on a DB with read-only permissions
 type ReadDB interface {
 	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
 	Begin() (Tx, error)
