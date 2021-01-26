@@ -10,6 +10,7 @@ import (
 
 	"github.com/GuiaBolso/darwin"
 	"github.com/fewlinesco/go-pkg/platform/metrics"
+	"github.com/fewlinesco/go-pkg/platform/web"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -68,6 +69,7 @@ type WriteDB interface {
 	ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error)
 	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
 	PingContext(ctx context.Context) error
+	HealthCheck(string) web.HealthzChecker
 }
 
 // ReadDB describes a set of methods which can be performed on a DB with read-only permissions
@@ -79,6 +81,7 @@ type ReadDB interface {
 	SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	PingContext(ctx context.Context) error
+	HealthCheck(string) web.HealthzChecker
 }
 
 // DB is a generic interface for database interaction
@@ -92,6 +95,7 @@ type DB interface {
 	SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	PingContext(ctx context.Context) error
+	HealthCheck(string) web.HealthzChecker
 }
 
 // Tx is a generic interface for database transactions
