@@ -213,7 +213,7 @@ func (c *ClassicalApplication) Start(name string, arguments []string, router *we
 		arguments = arguments[1:]
 	}
 
-	defaultServiceCheckers := []web.HealthzChecker{database.HealthCheck(c.Database)}
+	defaultServiceCheckers := []web.HealthzChecker{c.Database.HealthCheck("database")}
 	serviceCheckers = append(defaultServiceCheckers, serviceCheckers...)
 
 	switch command {
@@ -234,7 +234,7 @@ func (c *CQRSApplication) Start(name string, arguments []string, router *web.Rou
 		arguments = arguments[1:]
 	}
 
-	defaultServiceCheckers := []web.HealthzChecker{database.ReadDBHealthCheck(c.ReadDatabase), database.WriteDBHealthCheck(c.WriteDatabase)}
+	defaultServiceCheckers := []web.HealthzChecker{c.ReadDatabase.HealthCheck("read-database"), c.WriteDatabase.HealthCheck("write-database")}
 	serviceCheckers = append(defaultServiceCheckers, serviceCheckers...)
 
 	switch command {

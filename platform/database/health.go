@@ -10,18 +10,13 @@ import (
 )
 
 // HealthCheck is a generic health checker in charge of checking the database availability
-func HealthCheck(db DB) web.HealthzChecker {
-	return genericHealthCheck("database")(db)
+func (db *prodDB) HealthCheck(dbName string) web.HealthzChecker {
+	return genericHealthCheck(dbName)(db)
 }
 
-// ReadDBHealthCheck is a generic health checker in charge of checking the read database availability
-func ReadDBHealthCheck(db DB) web.HealthzChecker {
-	return genericHealthCheck("read-database")(db)
-}
-
-// WriteDBHealthCheck is a generic health checker in charge of checking the write database availability
-func WriteDBHealthCheck(db DB) web.HealthzChecker {
-	return genericHealthCheck("write-database")(db)
+// HealthCheck is a generic health checker in charge of checking the database availability
+func (db *sandboxDB) HealthCheck(dbName string) web.HealthzChecker {
+	return genericHealthCheck(dbName)(db)
 }
 
 func genericHealthCheck(databaseName string) func(db DB) web.HealthzChecker {
