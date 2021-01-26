@@ -60,16 +60,37 @@ var MetricViews = []*metrics.View{
 	},
 }
 
-// DB is a generic interface for database interaction
-type DB interface {
+// WriteDB describes a set of methods which can be performed on a DB with write permissions
+type WriteDB interface {
+	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
+	Begin() (Tx, error)
+	Close() error
+	ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error)
+	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
+	PingContext(ctx context.Context) error
+}
+
+// ReadDB describes a set of methods which can be performed on a DB with read-only permissions
+type ReadDB interface {
 	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
 	Begin() (Tx, error)
 	Close() error
 	SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	PingContext(ctx context.Context) error
+}
+
+// DB is a generic interface for database interaction
+type DB interface {
+	NewGenericDriver(dialect darwin.Dialect) *darwin.GenericDriver
+	Begin() (Tx, error)
+	Close() error
 	ExecContext(ctx context.Context, statement string, arg ...interface{}) (sql.Result, error)
 	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
+	SelectContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	SelectMultipleContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
+	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	PingContext(ctx context.Context) error
 }
 
@@ -124,6 +145,16 @@ func Connect(config Config) (DB, error) {
 	}
 
 	return &prodDB{db: db}, nil
+}
+
+// ConnectWriteDatabase creates a new database meant for write operations
+func ConnectWriteDatabase(config Config) (WriteDB, error) {
+	return Connect(config)
+}
+
+// ConnectReadDatabase creates a new database meant for read operations
+func ConnectReadDatabase(config Config) (ReadDB, error) {
+	return Connect(config)
 }
 
 // IsUniqueConstraintError is a helper checking the current database error and returnning true if it's a PG unique index

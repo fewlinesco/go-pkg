@@ -810,4 +810,105 @@ func TestProdDatabase(t *testing.T) {
 			doTest(tc, t)
 		}
 	})
+
+	t.Run("Connect to a write and read database", func(t *testing.T) {
+		cleanup := migrate(cfg, t)
+		defer cleanup()
+
+		runInsertTest := func(db database.WriteDB, data testData) (err error) {
+			ctx := context.Background()
+
+			if _, err = db.NamedExecContext(ctx, `INSERT INTO test_data (id, code) VALUES (:id, :code)`, data); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			return nil
+		}
+
+		runInsertTransactionTest := func(db database.WriteDB, data testData) error {
+			ctx := context.Background()
+			tx, err := db.Begin()
+			if err != nil {
+				return fmt.Errorf("can't start transaction: %v", err)
+			}
+
+			if _, err := tx.NamedExecContext(ctx, `INSERT INTO test_data (id, code) VALUES (:id, :code)`, data); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			if err := tx.Commit(); err != nil {
+				return fmt.Errorf("can't commit the transaction: %v", err)
+			}
+
+			return nil
+		}
+
+		runSelectTest := func(db database.ReadDB, expectedData testData) error {
+			ctx := context.Background()
+
+			var data testData
+			if err := db.GetContext(ctx, &data, `SELECT * FROM test_data WHERE id = $1`, expectedData.ID); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			if data.Code != expectedData.Code {
+				return fmt.Errorf("expected to retrieve the second data, but the code does not match. Expected: %s, received: %ss", expectedData.Code, data.Code)
+			}
+
+			return nil
+		}
+
+		runSelectTransactionTest := func(db database.ReadDB, expectedData testData) error {
+			ctx := context.Background()
+			tx, err := db.Begin()
+			if err != nil {
+				return fmt.Errorf("can't start transaction: %v", err)
+			}
+
+			var data []testData
+			if err := tx.SelectContext(ctx, &data, `SELECT * FROM test_data WHERE id = $1`, expectedData.ID); err != nil {
+				return fmt.Errorf("can't execute statement: %v", err)
+			}
+
+			if err := tx.Commit(); err != nil {
+				return fmt.Errorf("can't commit the transaction: %v", err)
+			}
+
+			if len(data) != 1 {
+				return fmt.Errorf("expected to retrieve only 1 item: %v", err)
+			}
+
+			if data[0].Code != expectedData.Code {
+				return fmt.Errorf("expected the to retrieve the first data element, but the code does not match. Expected: %s, received: %s", expectedData.Code, data[0].Code)
+			}
+
+			return nil
+		}
+
+		writeDatabase, err := database.ConnectWriteDatabase(cfg)
+		if err != nil {
+			t.Fatalf("could not establish connection to write DB: %#v", err)
+		}
+
+		if err := runInsertTest(writeDatabase, firstData); err != nil {
+			t.Fatalf("The insert command failed: %v", err)
+		}
+
+		if err := runInsertTransactionTest(writeDatabase, secondData); err != nil {
+			t.Fatalf("The transaction command failed: %v", err)
+		}
+
+		readDatabase, err := database.ConnectReadDatabase(cfg)
+		if err != nil {
+			t.Fatalf("could not establish connection to write DB: %#v", err)
+		}
+
+		if err := runSelectTest(readDatabase, secondData); err != nil {
+			t.Fatalf("The select command failed: %v", err)
+		}
+
+		if err := runSelectTransactionTest(readDatabase, firstData); err != nil {
+			t.Fatalf("The transaction command failed: %v", err)
+		}
+	})
 }

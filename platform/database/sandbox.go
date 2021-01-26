@@ -37,6 +37,26 @@ func SandboxConnect(config Config) (DB, error) {
 	}, nil
 }
 
+// SandboxReadWriteConnect returns a sandboxed read and write database from the given configuration
+func SandboxReadWriteConnect(config Config) (ReadDB, WriteDB, error) {
+	db, err := connect(config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't connect to database: %v", err)
+	}
+
+	tx, err := db.Beginx()
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create the test database transaction: %w", err)
+	}
+
+	connection := &sandboxDB{
+		db: db,
+		tx: tx,
+	}
+
+	return connection, connection, nil
+}
+
 func (db *sandboxDB) Close() error {
 	err := db.tx.Rollback()
 	closeErr := db.db.Close()
