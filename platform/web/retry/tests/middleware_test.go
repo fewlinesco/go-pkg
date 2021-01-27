@@ -19,9 +19,12 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 		config            retry.Config
 	}
 
+	delay := time.Second / 2 // half a second
+
 	cfg := retry.Config{
 		MaxRetry: 5,
 		ExceptOn: []int{http.StatusOK, http.StatusNotFound},
+		Delay: delay,
 	}
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -113,7 +116,26 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 			if res.StatusCode != tc.expectedHTTPCode {
 				t.Fatalf("Expected the response to have the http code: %d, but it returned: %d", tc.expectedHTTPCode, res.StatusCode)
 			}
+
+			for i, timestamp := range requestTimestamps {
+				// if final or only timestamp
+				if i == len(requestTimestamps)-1 {
+					break
+				}
+
+				// compare the next one with the current one so the outcome of .Sub() is a positive integer, like the delay
+				nextTimestamp := requestTimestamps[i + 1]
+				if timeBetweenRequests := nextTimestamp.Sub(timestamp); timeBetweenRequests < delay {
+					t.Fatalf(
+						"the delay between request: %d and request: %d is lower than configured. Expected the difference to be at least %v, but the requests were %v seconds appart",
+						i,
+						i+1,
+						delay,
+						timeBetweenRequests,
+					)
+				}
+			}
 		})
 	}
-
 }
+
