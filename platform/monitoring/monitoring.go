@@ -8,6 +8,7 @@ import (
 type Config struct {
 	AttachStacktrace bool    `json:"attach_stack_trace"`
 	DSN              string  `json:"dsn"`
+	ServerName       string  `json:"server_name"`
 	ReleaseName      string  `json:"release_name"`
 	Environment      string  `json:"environment"`
 	Debug            bool    `json:"debug"`
@@ -18,6 +19,7 @@ type Config struct {
 var DefaultConfig = Config{
 	AttachStacktrace: true,
 	DSN:              "",
+	ServerName:       "",
 	ReleaseName:      "",
 	Environment:      "development",
 	Debug:            false,
@@ -51,6 +53,7 @@ func NewErrorMonitoring(cfg Config) error {
 		SampleRate:  cfg.SampleRate,
 		Release:     cfg.ReleaseName,
 		Environment: cfg.Environment,
+		ServerName:  cfg.ServerName,
 	})
 
 	if err != nil {
