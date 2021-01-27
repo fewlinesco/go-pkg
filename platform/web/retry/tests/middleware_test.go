@@ -13,7 +13,7 @@ import (
 func TestRetryRoundTripperMiddleware(t *testing.T) {
 	type roundTripperMiddlewareTestCase struct {
 		name              string
-		expectedHTTPCode int
+		expectedHTTPCode  int
 		httpCodesToReturn []int
 		expectedCalls     int
 		config            retry.Config
@@ -24,7 +24,7 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 	cfg := retry.Config{
 		MaxRetry: 5,
 		ExceptOn: []int{http.StatusOK, http.StatusNotFound},
-		Delay: delay,
+		Delay:    delay,
 	}
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -35,13 +35,13 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 	tcs := []roundTripperMiddlewareTestCase{
 		{
 			name:              "it_does_not_retry_when_the_first_request_is_successful",
-			expectedHTTPCode: 	http.StatusOK,
+			expectedHTTPCode:  http.StatusOK,
 			httpCodesToReturn: []int{http.StatusOK},
 			expectedCalls:     1,
 		},
 		{
-			name:              "it_returns_the_last_response_when_no_request_is_successful",
-			expectedHTTPCode: 	http.StatusForbidden,
+			name:             "it_returns_the_last_response_when_no_request_is_successful",
+			expectedHTTPCode: http.StatusForbidden,
 			httpCodesToReturn: []int{
 				http.StatusUnprocessableEntity,
 				http.StatusUnprocessableEntity,
@@ -50,17 +50,17 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 				http.StatusUnprocessableEntity,
 				http.StatusForbidden,
 			},
-			expectedCalls:     6,
+			expectedCalls: 6,
 		},
 		{
 			name:              "it_stops_retrying_when_api_returns_expected_code",
-			expectedHTTPCode: 	http.StatusOK,
+			expectedHTTPCode:  http.StatusOK,
 			httpCodesToReturn: []int{http.StatusBadRequest, http.StatusBadRequest, http.StatusOK},
 			expectedCalls:     3,
 		},
 		{
-			name:              "it_stops_retrying_when_api_returns_other_expected_code",
-			expectedHTTPCode: 	http.StatusNotFound,
+			name:             "it_stops_retrying_when_api_returns_other_expected_code",
+			expectedHTTPCode: http.StatusNotFound,
 			httpCodesToReturn: []int{
 				http.StatusForbidden,
 				http.StatusForbidden,
@@ -68,13 +68,13 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 				http.StatusForbidden,
 				http.StatusNotFound,
 			},
-			expectedCalls:     5,
+			expectedCalls: 5,
 		},
 	}
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-		tc := tc
+			tc := tc
 			var requestTimestamps []time.Time
 
 			handler := func() http.HandlerFunc {
@@ -124,7 +124,7 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 				}
 
 				// compare the next one with the current one so the outcome of .Sub() is a positive integer, like the delay
-				nextTimestamp := requestTimestamps[i + 1]
+				nextTimestamp := requestTimestamps[i+1]
 				if timeBetweenRequests := nextTimestamp.Sub(timestamp); timeBetweenRequests < delay {
 					t.Fatalf(
 						"the delay between request: %d and request: %d is lower than configured. Expected the difference to be at least %v, but the requests were %v seconds appart",
@@ -138,4 +138,3 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 		})
 	}
 }
-
