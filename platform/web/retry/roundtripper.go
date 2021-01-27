@@ -16,30 +16,35 @@ type retryRoundTripper struct {
 	retryConfig  Config
 }
 
-func (retryRoundTripper retryRoundTripper) RoundTrip(req *http.Request) (res *http.Response, err error) {
-	try := retryRoundTripper.retryConfig.MaxRetry + 1
-	for try > 0 {
-		res, err = retryRoundTripper.roundTripper.RoundTrip(req)
-		if err != nil {
-			return res, err
-		}
-
-		if res.StatusCode >= 200 && res.StatusCode < 300 {
-			return res, nil
-		}
-
-		if isExceptStatus(res.StatusCode, retryRoundTripper.retryConfig.ExceptOn) {
-			return res, nil
-		}
-
-		try = try - 1
-		time.Sleep(retryRoundTripper.retryConfig.Delay)
+func (retryRoundTripper retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	doRequest := func(request *http.Request) (*http.Response, error) {
+		return retryRoundTripper.roundTripper.RoundTrip(request)
 	}
-	return res, err
+	
+	maxReTries := retryRoundTripper.retryConfig.MaxRetry
+
+	response, err := doRequest(req)
+	if err != nil || !isExceptStatus(response.StatusCode, retryRoundTripper.retryConfig.ExceptOn) {
+		for retry := 0; retry < maxReTries; retry++ {
+			res, err := doRequest(req)
+			if retry == maxReTries-1 {
+				return res, err
+			}
+
+			if err != nil || !isExceptStatus(res.StatusCode, retryRoundTripper.retryConfig.ExceptOn) {
+				time.Sleep(retryRoundTripper.retryConfig.Delay)
+				continue
+			}
+
+			return res, nil
+		}
+	}
+
+	return response, nil
 }
 
 func isExceptStatus(status int, exceptStatuses []int) bool {
-	for exceptStatus := range exceptStatuses {
+	for _, exceptStatus := range exceptStatuses {
 		if status == exceptStatus {
 			return true
 		}
