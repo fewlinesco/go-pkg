@@ -26,11 +26,11 @@ func (retryRoundTripper retryRoundTripper) RoundTrip(req *http.Request) (*http.R
 
 	response, err := doRequest(req)
 	if err != nil || !isExceptStatus(response.StatusCode, retryRoundTripper.retryConfig.ExceptOn) {
-		for retry := 0; retry < maxReTries; retry++ {
+		for retries := 0; retries < maxReTries; retries++ {
 			time.Sleep(retryRoundTripper.retryConfig.Delay)
 
 			res, err := doRequest(req)
-			if retry == maxReTries-1 {
+			if retries == maxReTries-1 {
 				return res, err
 			}
 
