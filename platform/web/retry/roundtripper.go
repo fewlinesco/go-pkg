@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Config describes the configuration options for the middleware
 type Config struct {
 	MaxRetry int
 	Delay    time.Duration
