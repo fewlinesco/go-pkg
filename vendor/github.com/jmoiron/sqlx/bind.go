@@ -22,10 +22,10 @@ const (
 )
 
 var defaultBinds = map[int][]string{
-	DOLLAR:   {"postgres", "pgx", "pq-timeouts", "cloudsqlpostgres", "ql"},
-	QUESTION: {"mysql", "sqlite3"},
-	NAMED:    {"oci8", "ora", "goracle"},
-	AT:       {"sqlserver"},
+	DOLLAR:   []string{"postgres", "pgx", "pq-timeouts", "cloudsqlpostgres", "ql"},
+	QUESTION: []string{"mysql", "sqlite3"},
+	NAMED:    []string{"oci8", "ora", "goracle"},
+	AT:       []string{"sqlserver"},
 }
 
 var binds sync.Map
