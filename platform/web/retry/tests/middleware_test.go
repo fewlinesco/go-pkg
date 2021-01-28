@@ -16,10 +16,9 @@ func TestRetryRoundTripperMiddleware(t *testing.T) {
 		expectedHTTPCode  int
 		httpCodesToReturn []int
 		expectedCalls     int
-		config            retry.Config
 	}
 
-	delay := time.Second / 2 // half a second
+	delay := time.Second / 4 // 250 millisecond
 
 	cfg := retry.Config{
 		MaxRetry: 5,
