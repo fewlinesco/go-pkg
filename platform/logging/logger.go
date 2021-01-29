@@ -2,9 +2,11 @@ package logging
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 )
 
 // Logger follow the standard go Logger and only give access to `Println`
@@ -43,6 +45,14 @@ func NewDefaultLogger() (*Logger, error) {
 	logger := Logger{logger: zLogger.WithOptions(zap.AddCallerSkip(1))}
 
 	return &logger, nil
+}
+
+// NewTestLogger creates a new logger to be used in tests with a nicer output
+// It will only show the logs for the failed tests as well as group them in the failed test message
+func NewTestLogger(t *testing.T) *Logger {
+	zLogger := zaptest.NewLogger(t, zaptest.WrapOptions())
+
+	return &Logger{logger: zLogger}
 }
 
 // Printf prints the logs
