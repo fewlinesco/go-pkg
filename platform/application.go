@@ -107,12 +107,13 @@ func DefaultClassicalApplicationMetricViews() []*metrics.View {
 
 // ReadConfiguration reads a file and unmarshal it to the given cfg struct
 func ReadConfiguration(filepath string, cfg interface{}) error {
-	cfgfile, err := os.Open(filepath)
+	cfgFile, err := os.Open(filepath)
 	if err != nil {
 		return fmt.Errorf("can't open %s file: %v", filepath, err)
 	}
+	defer cfgFile.Close()
 
-	if err := json.NewDecoder(cfgfile).Decode(cfg); err != nil {
+	if err := json.NewDecoder(cfgFile).Decode(cfg); err != nil {
 		return fmt.Errorf("can't parse %s file: %v", filepath, err)
 	}
 
