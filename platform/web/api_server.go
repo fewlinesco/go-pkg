@@ -34,7 +34,7 @@ func (s *APIServer) Listen() (net.Listener, error) {
 	return listener, nil
 }
 
-// Serve
+// Serve takes in a listener and start handling requests
 func (s *APIServer) Serve(listener net.Listener, errorChannel chan APIServerError) {
 	err := s.Server.Serve(listener)
 
