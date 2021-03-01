@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -22,6 +23,25 @@ type APIServer struct {
 type APIServerError struct {
 	Origin string
 	Error  error
+}
+
+// Listen creates a tcp listener for the server on its configured address meant to be passed to APIServer.Serve
+func (s *APIServer) Listen() (net.Listener, error) {
+	listener, err := net.Listen("tcp", s.Config.Address)
+	if err != nil {
+		return nil, fmt.Errorf("can't start listener for the API Server %s : %v", s.Name, err)
+	}
+	return listener, nil
+}
+
+// Serve takes in a listener and start handling requests
+func (s *APIServer) Serve(listener net.Listener, errorChannel chan APIServerError) {
+	err := s.Server.Serve(listener)
+
+	errorChannel <- APIServerError{
+		Origin: s.Name,
+		Error:  err,
+	}
 }
 
 // Start starts an API server and sends a message to the error channel in case it would have to close down
