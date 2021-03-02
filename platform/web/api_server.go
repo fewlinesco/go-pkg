@@ -14,9 +14,10 @@ import (
 
 // APIServer describes what an API server looks like
 type APIServer struct {
-	Name   string
-	Config ServerConfig
-	Server *http.Server
+	Name     string
+	Config   ServerConfig
+	Server   *http.Server
+	Listener net.Listener
 }
 
 // APIServerError describes how an API server error looks like so we can use it to shutdown other servers in the service
@@ -26,17 +27,23 @@ type APIServerError struct {
 }
 
 // Listen creates a tcp listener for the server on its configured address meant to be passed to APIServer.Serve
-func (s *APIServer) Listen() (net.Listener, error) {
+func (s *APIServer) Listen() error {
 	listener, err := net.Listen("tcp", s.Config.Address)
 	if err != nil {
-		return nil, fmt.Errorf("can't start listener for the API Server %s : %v", s.Name, err)
+		return fmt.Errorf("can't start listener for the API Server %s : %v", s.Name, err)
 	}
-	return listener, nil
+	s.Listener = listener
+	return nil
 }
 
-// Serve takes in a listener and start handling requests
-func (s *APIServer) Serve(listener net.Listener, errorChannel chan APIServerError) {
-	err := s.Server.Serve(listener)
+// Serve checks the APIServer listener is started and then start handling requests
+func (s *APIServer) Serve(errorChannel chan APIServerError) {
+	var err error
+	if s.Listener == nil {
+		err = fmt.Errorf("can't start serve for API Server %s: the APIServer listener must first be initialized by using APIserver.Listen() before it can start serving requests", s.Name)
+	} else {
+		err = s.Server.Serve(s.Listener)
+	}
 
 	errorChannel <- APIServerError{
 		Origin: s.Name,
