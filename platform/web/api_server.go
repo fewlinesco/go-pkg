@@ -26,7 +26,7 @@ type APIServerError struct {
 	Error  error
 }
 
-// Listen creates a tcp listener for the server on its configured address meant to be passed to APIServer.Serve
+// Listen creates a tcp listener for the server on its configured address
 func (s *APIServer) Listen() error {
 	listener, err := net.Listen("tcp", s.Config.Address)
 	if err != nil {
