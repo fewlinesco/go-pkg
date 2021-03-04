@@ -63,42 +63,8 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 	jsonSchema := gojsonschema.NewReferenceLoader("file://" + filePath)
 	payload := gojsonschema.NewBytesLoader(body)
 
-	result, err := gojsonschema.Validate(jsonSchema, payload)
-	if err != nil {
-		return fmt.Errorf("%w: %v", NewErrBadRequestResponse(nil), err)
-	}
-
-	if !result.Valid() {
-		requiredPropertyErrors := make(ErrorDetails)
-		requestContentErrorDetails := make(ErrorDetails)
-
-		for _, desc := range result.Errors() {
-			propertyName := desc.Field()
-			if propertyName == "(root)" {
-				details, ok := desc.Details()["property"]
-				if ok {
-					propertyName = fmt.Sprintf("%v", details)
-				}
-			}
-
-			if desc.Type() == "required" {
-				requiredPropertyErrors[propertyName] = desc.Description()
-				continue
-			}
-
-			requestContentErrorDetails[propertyName] = desc.Description()
-		}
-
-		if len(requiredPropertyErrors) > 0 {
-			errDetails := requiredPropertyErrors
-			for property, errMessage := range requestContentErrorDetails {
-				errDetails[property] = errMessage
-			}
-
-			return fmt.Errorf("the request body is missing some required keys: %w", NewErrBadRequestResponse(errDetails))
-		}
-
-		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
+	if err := validateRequestPayload(jsonSchema, payload); err != nil {
+		return err
 	}
 
 	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
@@ -118,6 +84,20 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 	jsonSchema := gojsonschema.NewBytesLoader(jsonSchemaBytes)
 	payload := gojsonschema.NewBytesLoader(body)
 
+	if err := validateRequestPayload(jsonSchema, payload); err != nil {
+		return err
+	}
+
+	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+	if err := decode(request, model, options); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRequestPayload(jsonSchema gojsonschema.JSONLoader, payload gojsonschema.JSONLoader) error {
 	result, err := gojsonschema.Validate(jsonSchema, payload)
 	if err != nil {
 		return fmt.Errorf("%w: %v", NewErrBadRequestResponse(nil), err)
@@ -154,12 +134,6 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 		}
 
 		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
-	}
-
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-	if err := decode(request, model, options); err != nil {
-		return err
 	}
 
 	return nil
