@@ -51,8 +51,6 @@ func Decode(r *http.Request, val interface{}) error {
 // DecodeWithJSONSchema takes the path to a json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
 func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath string, options DecoderOptions) error {
-	body, _ := ioutil.ReadAll(request.Body)
-
 	_, rootFile, _, ok := runtime.Caller(1)
 	if !ok {
 		return fmt.Errorf("%w", NewErrInvalidJSONSchemaFilePath())
@@ -61,43 +59,29 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 	filePath = path.Join(path.Dir(rootFile), filePath)
 
 	jsonSchema := gojsonschema.NewReferenceLoader("file://" + filePath)
-	payload := gojsonschema.NewBytesLoader(body)
 
-	if err := validateRequestPayload(jsonSchema, payload); err != nil {
+	if err := validateRequestPayload(request, model, options, jsonSchema); err != nil {
 		return err
 	}
-
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-	if err := decode(request, model, options); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // DecodeWithEmbeddedJSONSchema takes json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
 func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, jsonSchemaBytes []byte, options DecoderOptions) error {
-	body, _ := ioutil.ReadAll(request.Body)
-
 	jsonSchema := gojsonschema.NewBytesLoader(jsonSchemaBytes)
-	payload := gojsonschema.NewBytesLoader(body)
 
-	if err := validateRequestPayload(jsonSchema, payload); err != nil {
+	if err := validateRequestPayload(request, model, options, jsonSchema); err != nil {
 		return err
 	}
-
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-	if err := decode(request, model, options); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func validateRequestPayload(jsonSchema gojsonschema.JSONLoader, payload gojsonschema.JSONLoader) error {
+func validateRequestPayload(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
+	body, _ := ioutil.ReadAll(request.Body)
+	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	payload := gojsonschema.NewBytesLoader(body)
+
 	result, err := gojsonschema.Validate(jsonSchema, payload)
 	if err != nil {
 		return fmt.Errorf("%w: %v", NewErrBadRequestResponse(nil), err)
@@ -134,6 +118,10 @@ func validateRequestPayload(jsonSchema gojsonschema.JSONLoader, payload gojsonsc
 		}
 
 		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
+	}
+
+	if err := decode(request, model, options); err != nil {
+		return err
 	}
 
 	return nil
