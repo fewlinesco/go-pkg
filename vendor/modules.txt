@@ -11,6 +11,8 @@ github.com/BurntSushi/toml
 # github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 ## explicit
 github.com/GuiaBolso/darwin
+# github.com/PuerkitoBio/goquery v1.5.1
+## explicit
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 github.com/alecthomas/template
 github.com/alecthomas/template/parse
@@ -70,7 +72,7 @@ github.com/gorilla/mux
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# github.com/jmoiron/sqlx v1.2.1-0.20201120164427-00c6e74d816a
+# github.com/jmoiron/sqlx v1.3.2-0.20210128211550-a1d5e6473423
 ## explicit
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
@@ -87,8 +89,6 @@ github.com/leodido/go-urn
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/mattn/go-sqlite3 v1.14.1
-## explicit
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
