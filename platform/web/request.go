@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"reflect"
@@ -78,8 +78,8 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 }
 
 func validateRequestPayload(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
-	body, _ := ioutil.ReadAll(request.Body)
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	body, _ := io.ReadAll(request.Body)
+	request.Body = io.NopCloser(bytes.NewBuffer(body))
 	payload := gojsonschema.NewBytesLoader(body)
 
 	result, err := gojsonschema.Validate(jsonSchema, payload)
