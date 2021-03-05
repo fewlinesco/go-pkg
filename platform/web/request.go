@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"reflect"
@@ -51,8 +51,6 @@ func Decode(r *http.Request, val interface{}) error {
 // DecodeWithJSONSchema takes the path to a json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
 func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath string, options DecoderOptions) error {
-	body, _ := ioutil.ReadAll(request.Body)
-
 	_, rootFile, _, ok := runtime.Caller(1)
 	if !ok {
 		return fmt.Errorf("%w", NewErrInvalidJSONSchemaFilePath())
@@ -61,6 +59,27 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 	filePath = path.Join(path.Dir(rootFile), filePath)
 
 	jsonSchema := gojsonschema.NewReferenceLoader("file://" + filePath)
+
+	if err := validateRequestPayload(request, model, options, jsonSchema); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DecodeWithEmbeddedJSONSchema takes json schema and a http request
+// And returns an error when the request's payload does not match the JSON schema
+func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, jsonSchemaBytes []byte, options DecoderOptions) error {
+	jsonSchema := gojsonschema.NewBytesLoader(jsonSchemaBytes)
+
+	if err := validateRequestPayload(request, model, options, jsonSchema); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateRequestPayload(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
+	body, _ := io.ReadAll(request.Body)
+	request.Body = io.NopCloser(bytes.NewBuffer(body))
 	payload := gojsonschema.NewBytesLoader(body)
 
 	result, err := gojsonschema.Validate(jsonSchema, payload)
@@ -100,8 +119,6 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 
 		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
 	}
-
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	if err := decode(request, model, options); err != nil {
 		return err
