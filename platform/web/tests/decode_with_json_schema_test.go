@@ -174,7 +174,9 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestDecodeWithJSONSchemaWithInvalidFilePath(t *testing.T) {
 	t.Run("it returns an error when the file path is incorrect", func(t *testing.T) {
 		body := `{"code": "code", "id": "c9ecb26a-20ab-4acb-b34e-444457b06b3b", "datatype": "string"}`
 		request := prepareRequest(t, body)
