@@ -18,10 +18,10 @@ jobs:
       - name: Build the stack
         run: docker-compose up -d
 
-      - name: 'setup go 1.14.2'
+      - name: 'setup go 1.16.0'
         uses: actions/setup-go@v2
         with:
-          go-version: '1.14.2'
+          go-version: '1.16.0'
 
       - name: 'run tests'
         run: make test
