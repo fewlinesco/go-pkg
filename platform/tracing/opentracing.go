@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"contrib.go.opencensus.io/exporter/jaeger"
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
+	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
 )
 
@@ -95,13 +95,13 @@ func EndSpan(span *trace.Span) {
 // SpanContextToRequest adds the provided span's information to the given request.
 // This is useful for requests to other services so we can have distributed traces
 func SpanContextToRequest(span *trace.Span, req *http.Request) {
-	format := b3.HTTPFormat{}
+	format := tracecontext.HTTPFormat{}
 	format.SpanContextToRequest(span.SpanContext(), req)
 }
 
 // SpanContextFromRequest gets any span context information from the request
 // This is useful for handling requests from other services so we can have distributed traces
 func SpanContextFromRequest(req *http.Request) (trace.SpanContext, bool) {
-	format := b3.HTTPFormat{}
+	format := tracecontext.HTTPFormat{}
 	return format.SpanContextFromRequest(req)
 }
