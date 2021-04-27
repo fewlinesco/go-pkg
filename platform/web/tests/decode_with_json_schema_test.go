@@ -29,7 +29,7 @@ type decodeWithJSONSchemaTestData struct {
 
 var testCases = []decodeWithJSONSchemaTestData{
 	{
-		Name:           "when the decoding happens without an error",
+		Name:           "when_the_decoding_happens_without_an_error",
 		Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer"}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError:  nil,
@@ -40,7 +40,7 @@ var testCases = []decodeWithJSONSchemaTestData{
 		},
 	},
 	{
-		Name:           "when a parameter has an incorrect datatype",
+		Name:           "when_a_parameter_has_an_incorrect_datatype",
 		Body:           `{"code": 1, "id": "815b73a1-3d89-4c68-a4d8-1f36c091a533", "datatype": "string"}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError: web.NewErrInvalidRequestBodyContent(web.ErrorDetails{
@@ -48,7 +48,7 @@ var testCases = []decodeWithJSONSchemaTestData{
 		}),
 	},
 	{
-		Name:           "when a parameter has an incorrect enum type",
+		Name:           "when_a_parameter_has_an_incorrect_enum_type",
 		Body:           `{"code": "code", "id": "10fbd107-4bcf-4c91-8ee2-957e07d6109e", "datatype": "hello"}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError: web.NewErrInvalidRequestBodyContent(web.ErrorDetails{
@@ -56,34 +56,23 @@ var testCases = []decodeWithJSONSchemaTestData{
 		}),
 	},
 	{
-		Name:           "when the json has an unknown field and the decoder options are empty",
+		Name:           "when_the_json_has_an_unknown_field_and_the_decoder_options_are_empty",
 		Body:           `{"code": "code", "id": "78c8803e-ce4e-474e-97c4-7bd6d565ddca", "datatype": "string", "unknown_field": "hello"}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
-			"unknown_field": "unknown_field field is not allowed",
+			"unknown_field": "Additional property unknown_field is not allowed",
 		}),
 	},
 	{
-		Name:           "when the json has an unknown field and the decoder options specify it should not allow unknown fields ",
+		Name:           "when_the_json_has_an_unknown_field_and_the_decoder_options_specify_it_should_not_allow_unknown_fields",
 		Body:           `{"code": "code", "id": "ec85bd34-67bf-4418-95cb-2616e914bfc9", "datatype": "string", "unknown_field": "hello"}`,
 		DecoderOptions: web.DecoderOptions{AllowUnknownFields: false},
 		ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
-			"unknown_field": "unknown_field field is not allowed",
+			"unknown_field": "Additional property unknown_field is not allowed",
 		}),
 	},
 	{
-		Name:           "when the json has an unknown field and the decoder options specify it should allow unknown fields ",
-		Body:           `{"code": "code", "id": "8321308a-4cae-4175-8c56-2db087e5ca10", "datatype": "integer", "unknown_field": "hello"}`,
-		DecoderOptions: web.DecoderOptions{AllowUnknownFields: true},
-		ExpectedError:  nil,
-		ExpectedOutcome: expectedModel{
-			ID:       "8321308a-4cae-4175-8c56-2db087e5ca10",
-			Code:     "code",
-			DataType: "integer",
-		},
-	},
-	{
-		Name:           "it returns a bad request reponse when a required key is missing",
+		Name:           "it_returns_a_bad_request_reponse_when_a_required_key_is_missing",
 		Body:           `{"code": "code", "datatype": "integer"}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
@@ -91,7 +80,7 @@ var testCases = []decodeWithJSONSchemaTestData{
 		}),
 	},
 	{
-		Name:           "it returns a bad request reponse when a required key is missing and there is an issue with another property",
+		Name:           "it_returns_a_bad_request_reponse_when_a_required_key_is_missing_and_there_is_an_issue_with_another_property",
 		Body:           `{"code": 5, "datatype": "integer"}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
@@ -100,7 +89,7 @@ var testCases = []decodeWithJSONSchemaTestData{
 		}),
 	},
 	{
-		Name:           "It can properly validate the localized string",
+		Name:           "it_can_properly_validate_the_localized_string",
 		Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"en-US": "this is a test", "fr-FR": "another test"}}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError:  nil,
@@ -112,7 +101,7 @@ var testCases = []decodeWithJSONSchemaTestData{
 		},
 	},
 	{
-		Name:           "It throws an error when a required nested property is missing",
+		Name:           "it_throws_an_error_when_a_required_nested_property_is_missing",
 		Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"fr-FR": "another test"}}`,
 		DecoderOptions: web.DecoderOptions{},
 		ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
@@ -120,10 +109,10 @@ var testCases = []decodeWithJSONSchemaTestData{
 		}),
 	},
 	{
-		Name:           "It throws an error when another required nested property is missing",
+		Name:           "it_throws_an_error_when_a_property_with_invalid_format_is_added",
 		Body:           `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer", "name": {"en-US": "this is a test", "French": "ceci est une test"}}`,
 		DecoderOptions: web.DecoderOptions{},
-		ExpectedError: web.NewErrInvalidRequestBodyContent(web.ErrorDetails{
+		ExpectedError: web.NewErrBadRequestResponse(web.ErrorDetails{
 			"name": "Additional property French is not allowed",
 		}),
 	},
@@ -165,6 +154,7 @@ func TestDecodeWithJSONSchema(t *testing.T) {
 				if tc.ExpectedError == nil {
 					t.Fatalf("the request body failed the validation but the test did not expect this: %v", err)
 				}
+
 				checkError(t, tc.ExpectedError, err)
 				return
 			}
