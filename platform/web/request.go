@@ -88,6 +88,7 @@ func validateRequestPayload(request *http.Request, model interface{}, options De
 	}
 
 	if !result.Valid() {
+		additionalPropertyErrors := make(ErrorDetails)
 		requiredPropertyErrors := make(ErrorDetails)
 		requestContentErrorDetails := make(ErrorDetails)
 
@@ -100,12 +101,23 @@ func validateRequestPayload(request *http.Request, model interface{}, options De
 				}
 			}
 
-			if desc.Type() == "required" {
+			switch desc.Type() {
+			case "additional_property_not_allowed":
+				additionalPropertyErrors[propertyName] = desc.Description()
+			case "required":
 				requiredPropertyErrors[propertyName] = desc.Description()
-				continue
+			default:
+				requestContentErrorDetails[propertyName] = desc.Description()
+			}
+		}
+
+		if len(additionalPropertyErrors) > 0 {
+			errDetails := additionalPropertyErrors
+			for property, errMessage := range requestContentErrorDetails {
+				errDetails[property] = errMessage
 			}
 
-			requestContentErrorDetails[propertyName] = desc.Description()
+			return fmt.Errorf("the request body contains unknown keys: %w", NewErrBadRequestResponse(errDetails))
 		}
 
 		if len(requiredPropertyErrors) > 0 {
@@ -114,7 +126,7 @@ func validateRequestPayload(request *http.Request, model interface{}, options De
 				errDetails[property] = errMessage
 			}
 
-			return fmt.Errorf("the request body is missing some required keys: %w", NewErrBadRequestResponse(errDetails))
+			return fmt.Errorf("the request body contains unknown keys: %w", NewErrBadRequestResponse(errDetails))
 		}
 
 		return fmt.Errorf("%w", NewErrInvalidRequestBodyContent(requestContentErrorDetails))
