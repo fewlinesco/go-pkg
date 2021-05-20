@@ -70,6 +70,7 @@ type WriteDB interface {
 	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
 	PingContext(ctx context.Context) error
 	HealthCheck(string) web.HealthzChecker
+	Rebind(query string) string
 }
 
 // ReadDB describes a set of methods which can be performed on a DB with read-only permissions
@@ -82,6 +83,7 @@ type ReadDB interface {
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	PingContext(ctx context.Context) error
 	HealthCheck(string) web.HealthzChecker
+	Rebind(query string) string
 }
 
 // DB is a generic interface for database interaction
@@ -96,6 +98,7 @@ type DB interface {
 	GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error
 	PingContext(ctx context.Context) error
 	HealthCheck(string) web.HealthzChecker
+	Rebind(query string) string
 }
 
 // Tx is a generic interface for database transactions
@@ -106,6 +109,7 @@ type Tx interface {
 	NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error)
 	Commit() error
 	Rollback() error
+	Rebind(query string) string
 }
 
 // DB represents the database connection
@@ -325,6 +329,10 @@ func (db *prodDB) PingContext(ctx context.Context) error {
 	return err
 }
 
+func (db *prodDB) Rebind(query string) string {
+	return db.db.Rebind(query)
+}
+
 // Commit persists the transaction
 func (tx *prodTx) Commit() error {
 	return tx.tx.Commit()
@@ -391,4 +399,8 @@ func (tx *prodTx) ExecContext(ctx context.Context, statement string, arg ...inte
 	metrics.RecordError(ctx, metricQueryErrorTotal, err)
 
 	return response, err
+}
+
+func (tx *prodTx) Rebind(query string) string {
+	return tx.tx.Rebind(query)
 }

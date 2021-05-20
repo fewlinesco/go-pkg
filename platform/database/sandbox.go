@@ -120,6 +120,10 @@ func (db *sandboxDB) PingContext(ctx context.Context) error {
 
 }
 
+func (db *sandboxDB) Rebind(query string) string {
+	return db.db.Rebind(query)
+}
+
 func (tx *sandboxTx) Commit() error {
 	if tx.rollBackedOrCommitted {
 		return fmt.Errorf("transaction has already been rollbacked or commited")
@@ -170,4 +174,8 @@ func (tx *sandboxTx) ExecContext(ctx context.Context, statement string, arg ...i
 
 func (tx *sandboxTx) NamedExecContext(ctx context.Context, statement string, arg interface{}) (sql.Result, error) {
 	return tx.tx.NamedExecContext(ctx, statement, arg)
+}
+
+func (tx *sandboxTx) Rebind(query string) string {
+	return tx.tx.Rebind(query)
 }
