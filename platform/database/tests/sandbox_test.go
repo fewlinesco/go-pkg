@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,12 +15,13 @@ import (
 func TestSandboxDatabase(t *testing.T) {
 
 	type testData struct {
-		ID   string `database:"id"`
-		Code string `database:"code"`
+		ID     string        `database:"id"`
+		Code   string        `database:"code"`
+		Number sql.NullInt64 `database:"number"`
 	}
 
-	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Code: "first_value"}
-	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value"}
+	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Code: "first_value", Number: sql.NullInt64{Int64: 1, Valid: true}}
+	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value", Number: sql.NullInt64{Int64: 0, Valid: false}}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -449,7 +451,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			`INSERT INTO test_data (id, code, number) VALUES (:id, :code, :number)`,
 			firstData,
 		)
 
@@ -459,7 +461,7 @@ func TestSandboxDatabase(t *testing.T) {
 
 		_, err = sqlxDB.NamedExecContext(
 			context.Background(),
-			`INSERT INTO test_data (id, code) VALUES (:id, :code)`,
+			`INSERT INTO test_data (id, code, number) VALUES (:id, :code, :number)`,
 			secondData,
 		)
 
@@ -471,7 +473,7 @@ func TestSandboxDatabase(t *testing.T) {
 			name      string
 			condition *struct {
 				sql string
-				arg []string
+				arg []interface{}
 			}
 			shouldFindData []testData
 			shouldErr      bool
@@ -487,8 +489,8 @@ func TestSandboxDatabase(t *testing.T) {
 				name: "when a condition is provided it only gets the requested data",
 				condition: &struct {
 					sql string
-					arg []string
-				}{sql: "WHERE id IN (?)", arg: []string{firstData.ID}},
+					arg []interface{}
+				}{sql: "WHERE id IN (?)", arg: []interface{}{firstData.ID}},
 				shouldFindData: []testData{firstData},
 				shouldErr:      false,
 			},
@@ -496,8 +498,8 @@ func TestSandboxDatabase(t *testing.T) {
 				name: "when multiple conditions are given it gets all the request data",
 				condition: &struct {
 					sql string
-					arg []string
-				}{sql: "WHERE id IN (?)", arg: []string{firstData.ID, secondData.ID}},
+					arg []interface{}
+				}{sql: "WHERE id IN (?)", arg: []interface{}{[]string{firstData.ID, secondData.ID}}},
 				shouldFindData: []testData{firstData, secondData},
 				shouldErr:      false,
 			},
@@ -505,16 +507,25 @@ func TestSandboxDatabase(t *testing.T) {
 				name: "when no data is matching the condition, it returns an empty slice with no error",
 				condition: &struct {
 					sql string
-					arg []string
-				}{sql: "WHERE id IN (?)", arg: []string{"3237b466-b3c6-4521-96c5-61022c4a1796"}},
+					arg []interface{}
+				}{sql: "WHERE id IN (?)", arg: []interface{}{"3237b466-b3c6-4521-96c5-61022c4a1796"}},
 				shouldFindData: []testData{},
+				shouldErr:      false,
+			},
+			{
+				name: "when a condition is provided with arguments of different types, it returns the expected data",
+				condition: &struct {
+					sql string
+					arg []interface{}
+				}{sql: "WHERE id IN (?) AND number IN (?)", arg: []interface{}{firstData.ID, firstData.Number}},
+				shouldFindData: []testData{firstData},
 				shouldErr:      false,
 			},
 		}
 
 		doTest := func(tc testCase, t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
-				db, err := database.Connect(cfg)
+				db, err := database.SandboxConnect(cfg)
 				if err != nil {
 					t.Fatalf("could not connect to the database: %#v", err)
 				}
@@ -524,7 +535,7 @@ func TestSandboxDatabase(t *testing.T) {
 				if tc.condition == nil {
 					err = db.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
 				} else {
-					err = db.SelectMultipleContext(context.Background(), &selectTestData, fmt.Sprintf("%s %s;", `SELECT * FROM test_data`, tc.condition.sql), tc.condition.arg)
+					err = db.SelectMultipleContext(context.Background(), &selectTestData, fmt.Sprintf("%s %s;", `SELECT * FROM test_data`, tc.condition.sql), tc.condition.arg...)
 				}
 
 				if tc.shouldErr {
@@ -533,7 +544,7 @@ func TestSandboxDatabase(t *testing.T) {
 					}
 				} else {
 					if err != nil {
-						t.Fatalf("could not GetContext %#v", err)
+						t.Fatalf("could not SelectMultipleContext %#v", err)
 					}
 				}
 
