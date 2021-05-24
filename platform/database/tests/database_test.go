@@ -452,8 +452,8 @@ func TestProdDatabase(t *testing.T) {
 		type testCase struct {
 			name      string
 			condition *struct {
-				sql string
-				arg []interface{}
+				sql  string
+				args []interface{}
 			}
 			shouldFindData []testData
 			shouldErr      bool
@@ -468,45 +468,45 @@ func TestProdDatabase(t *testing.T) {
 			{
 				name: "when a condition is provided it only gets the requested data",
 				condition: &struct {
-					sql string
-					arg []interface{}
-				}{sql: "WHERE id IN (?)", arg: []interface{}{firstData.ID}},
+					sql  string
+					args []interface{}
+				}{sql: "WHERE id IN (?)", args: []interface{}{firstData.ID}},
 				shouldFindData: []testData{firstData},
 				shouldErr:      false,
 			},
 			{
 				name: "when multiple conditions are given it gets all the request data",
 				condition: &struct {
-					sql string
-					arg []interface{}
-				}{sql: "WHERE id IN (?)", arg: []interface{}{[]string{firstData.ID, secondData.ID}}},
+					sql  string
+					args []interface{}
+				}{sql: "WHERE id IN (?)", args: []interface{}{[]string{firstData.ID, secondData.ID}}},
 				shouldFindData: []testData{firstData, secondData},
 				shouldErr:      false,
 			},
 			{
 				name: "when no data is matching the condition, it returns an empty slice with no error",
 				condition: &struct {
-					sql string
-					arg []interface{}
-				}{sql: "WHERE id IN (?)", arg: []interface{}{"3237b466-b3c6-4521-96c5-61022c4a1796"}},
+					sql  string
+					args []interface{}
+				}{sql: "WHERE id IN (?)", args: []interface{}{"3237b466-b3c6-4521-96c5-61022c4a1796"}},
 				shouldFindData: []testData{},
 				shouldErr:      false,
 			},
 			{
 				name: "when the condition is faulty, it does not populate the slice and return an error",
 				condition: &struct {
-					sql string
-					arg []interface{}
-				}{sql: "WHERE non_exisiting_field IN (?) ", arg: []interface{}{firstData.ID}},
+					sql  string
+					args []interface{}
+				}{sql: "WHERE non_exisiting_field IN (?) ", args: []interface{}{firstData.ID}},
 				shouldFindData: []testData{},
 				shouldErr:      true,
 			},
 			{
 				name: "when a condition is provided with arguments of different types, it returns the expected data",
 				condition: &struct {
-					sql string
-					arg []interface{}
-				}{sql: "WHERE id IN (?) AND number IN (?)", arg: []interface{}{firstData.ID, firstData.Number}},
+					sql  string
+					args []interface{}
+				}{sql: "WHERE id IN (?) AND number IN (?)", args: []interface{}{firstData.ID, firstData.Number}},
 				shouldFindData: []testData{firstData},
 				shouldErr:      false,
 			},
@@ -524,7 +524,7 @@ func TestProdDatabase(t *testing.T) {
 				if tc.condition == nil {
 					err = db.SelectContext(context.Background(), &selectTestData, `SELECT * FROM test_data;`)
 				} else {
-					err = db.SelectMultipleContext(context.Background(), &selectTestData, fmt.Sprintf("%s %s;", `SELECT * FROM test_data`, tc.condition.sql), tc.condition.arg...)
+					err = db.SelectMultipleContext(context.Background(), &selectTestData, fmt.Sprintf("%s %s;", `SELECT * FROM test_data`, tc.condition.sql), tc.condition.args...)
 				}
 
 				if tc.shouldErr {
