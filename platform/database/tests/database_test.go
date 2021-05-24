@@ -20,7 +20,7 @@ func TestProdDatabase(t *testing.T) {
 	}
 
 	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Code: "first_value", Number: sql.NullInt64{Int64: 1, Valid: true}}
-	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value", Number: sql.NullInt64{Int64: 0, Valid: false}}
+	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value", Number: sql.NullInt64{Int64: 2, Valid: true}}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -506,7 +506,16 @@ func TestProdDatabase(t *testing.T) {
 				condition: &struct {
 					sql  string
 					args []interface{}
-				}{sql: "WHERE id IN (?) AND number IN (?)", args: []interface{}{firstData.ID, firstData.Number}},
+				}{sql: "WHERE id IN (?) AND number IN (?)", args: []interface{}{[]string{firstData.ID, secondData.ID}, []sql.NullInt64{firstData.Number, secondData.Number}}},
+				shouldFindData: []testData{firstData, secondData},
+				shouldErr:      false,
+			},
+			{
+				name: "when a condition is provided with arguments of different types including slices, it returns the expected data",
+				condition: &struct {
+					sql  string
+					args []interface{}
+				}{sql: "WHERE id = (?) AND number IN (?)", args: []interface{}{firstData.ID, []sql.NullInt64{firstData.Number, secondData.Number}}},
 				shouldFindData: []testData{firstData},
 				shouldErr:      false,
 			},
@@ -536,7 +545,8 @@ func TestProdDatabase(t *testing.T) {
 						t.Fatalf("could not GetContext %#v", err)
 					}
 				}
-
+				t.Logf("Should find: %+v\n\n", tc.shouldFindData)
+				t.Logf("Found: %+v\n\n", selectTestData)
 				if len(tc.shouldFindData) != len(selectTestData) {
 					t.Fatalf("expected shouldFindData and selectTestData to have the same length but got tc.shouldFindData: %#v, selectTestData: %#v", tc.shouldFindData, selectTestData)
 				}

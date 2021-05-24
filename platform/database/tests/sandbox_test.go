@@ -21,7 +21,7 @@ func TestSandboxDatabase(t *testing.T) {
 	}
 
 	var firstData = testData{ID: "ef79f1d4-4150-45ff-b94d-9e4691cc05aa", Code: "first_value", Number: sql.NullInt64{Int64: 1, Valid: true}}
-	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value", Number: sql.NullInt64{Int64: 0, Valid: false}}
+	var secondData = testData{ID: "bdc90138-ee0f-456c-8e31-e92514fac45e", Code: "second_value", Number: sql.NullInt64{Int64: 2, Valid: true}}
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -517,7 +517,16 @@ func TestSandboxDatabase(t *testing.T) {
 				condition: &struct {
 					sql  string
 					args []interface{}
-				}{sql: "WHERE id IN (?) AND number IN (?)", args: []interface{}{firstData.ID, firstData.Number}},
+				}{sql: "WHERE id IN (?) AND number IN (?)", args: []interface{}{[]string{firstData.ID, secondData.ID}, []sql.NullInt64{firstData.Number, secondData.Number}}},
+				shouldFindData: []testData{firstData, secondData},
+				shouldErr:      false,
+			},
+			{
+				name: "when a condition is provided with one argument being a string and the other a slice of int, it returns the expected data",
+				condition: &struct {
+					sql  string
+					args []interface{}
+				}{sql: "WHERE id = (?) AND number IN (?)", args: []interface{}{firstData.ID, []sql.NullInt64{firstData.Number, secondData.Number}}},
 				shouldFindData: []testData{firstData},
 				shouldErr:      false,
 			},

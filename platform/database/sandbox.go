@@ -92,7 +92,7 @@ func (db *sandboxDB) SelectMultipleContext(ctx context.Context, dest interface{}
 	}
 
 	query = db.db.Rebind(query)
-
+	fmt.Printf("query: %v\nargs: %v\n", query, queryArguments)
 	return db.db.SelectContext(ctx, dest, query, queryArguments...)
 }
 
