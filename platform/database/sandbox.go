@@ -91,9 +91,8 @@ func (db *sandboxDB) SelectMultipleContext(ctx context.Context, dest interface{}
 		return fmt.Errorf("an error occured whilst preparing the statement: %v", err)
 	}
 
-	query = db.db.Rebind(query)
-	fmt.Printf("query: %v\nargs: %v\n", query, queryArguments)
-	return db.db.SelectContext(ctx, dest, query, queryArguments...)
+	query = db.tx.Rebind(query)
+	return db.tx.SelectContext(ctx, dest, query, queryArguments...)
 }
 
 func (db *sandboxDB) GetContext(ctx context.Context, dest interface{}, statement string, args ...interface{}) error {
