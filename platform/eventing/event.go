@@ -46,34 +46,44 @@ type Event struct {
 // dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
 // data: is the payload of the event itself
 func CreatePublisherEvent(ctx context.Context, tx database.Tx, subject string, eventType string, source string, dataschema string, data interface{}) (Event, error) {
-	rawData, err := json.Marshal(data)
+	evts, err := CreatePublisherEvents(ctx, tx, subject, eventType, source, dataschema, []interface{}{data})
 	if err != nil {
-		return Event{}, fmt.Errorf("can't marshal event: %w", err)
+		return Event{}, err
 	}
 
-	ev := Event{
-		ID:           uuid.New().String(),
-		Status:       EventStatusQueued,
-		Subject:      subject,
-		DataSchema:   dataschema,
-		Type:         eventType,
-		Source:       source,
-		Data:         rawData,
-		DispatchedAt: time.Now(),
+	return evts[0], nil
+}
+
+func CreatePublisherEvents (ctx context.Context, tx database.Tx, subject string, eventType string, source string, dataschema string, data []interface{}) ([]Event, error) {
+	publisherEvents := make([]Event, 0, len(data))
+	for _, payload := range data {
+		rawPayload, err := json.Marshal(payload)
+		if err != nil {
+			return nil, fmt.Errorf("create publisher event failed: can't marshal the payload for the event: %v", err)
+		}
+
+		publisherEvents = append(publisherEvents, Event{
+			ID:           uuid.New().String(),
+			Status:       EventStatusQueued,
+			Subject:      subject,
+			DataSchema:   dataschema,
+			Type:         eventType,
+			Source:       source,
+			Data:         rawPayload,
+			DispatchedAt: time.Now(),
+		})
 	}
 
-	_, err = tx.NamedExecContext(ctx, `
+	_, err := tx.NamedExecContext(ctx, `
 		INSERT INTO publisher_events
-		(id, status, subject, type, source, dataschema, data, dispatched_at)
-		VALUES
+		(id, status, subject, type, source, dataschema, data, dispatched_at) VALUES
 		(:id, :status, :subject, :type, :source, :dataschema, :data, :dispatched_at)
-	`, ev)
-
+	`, publisherEvents)
 	if err != nil {
-		return ev, fmt.Errorf("can't insert: %w", err)
+		return nil, fmt.Errorf("create publisher event failed: can't schedule the events: %w", err)
 	}
 
-	return ev, nil
+	return publisherEvents, nil
 }
 
 // ScheduleBackgroundJob schedules a new background job to be executed.
