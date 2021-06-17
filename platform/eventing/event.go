@@ -54,6 +54,12 @@ func CreatePublisherEvent(ctx context.Context, tx database.Tx, subject string, e
 	return evts[0], nil
 }
 
+// CreatePublisherEvents creates a number of new events that we'll store inside the publisher_events table.
+// subject: the resource bound to the event (e.g current user id, etc...)
+// type: is the name of the event (e.g `application.created`)
+// source: name of the application that created the event
+// dataschema: is the JSON-Schema ID of the event (e.g. https://github.com/fewlinesco/myapp/jsonschema/application.created.json)
+// data: is a list of payloads for each event
 func CreatePublisherEvents(ctx context.Context, tx database.Tx, subject string, eventType string, source string, dataschema string, data []interface{}) ([]Event, error) {
 	publisherEvents := make([]Event, 0, len(data))
 	for _, payload := range data {
