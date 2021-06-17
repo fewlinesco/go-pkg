@@ -54,7 +54,7 @@ func CreatePublisherEvent(ctx context.Context, tx database.Tx, subject string, e
 	return evts[0], nil
 }
 
-func CreatePublisherEvents (ctx context.Context, tx database.Tx, subject string, eventType string, source string, dataschema string, data []interface{}) ([]Event, error) {
+func CreatePublisherEvents(ctx context.Context, tx database.Tx, subject string, eventType string, source string, dataschema string, data []interface{}) ([]Event, error) {
 	publisherEvents := make([]Event, 0, len(data))
 	for _, payload := range data {
 		rawPayload, err := json.Marshal(payload)
