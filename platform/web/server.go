@@ -48,11 +48,11 @@ func NewServer(config ServerConfig, router http.Handler) *http.Server {
 
 // NewMonitoringServer creates a new monitoring server configured for metrics and healthz
 func NewMonitoringServer(config ServerConfig, logger *logging.Logger, metricsHandler Handler, serviceCheckers []HealthzChecker) *http.Server {
-	router := NewRouter(logger, DefaultMiddlewares(logger))
+	router := NewRouter(logger, nil)
 
-	router.HandleFunc("GET", "/metrics", metricsHandler)
-	router.HandleFunc("GET", "/ping", pingHandler)
-	router.HandleFunc("GET", "/healthz", HealthzHandler(serviceCheckers))
+	router.HandleFunc("GET", "/metrics", metricsHandler, DefaultMiddlewares(logger)...)
+	router.HandleFunc("GET", "/ping", pingHandler, RecoveryMiddleware(logger), ErrorsMiddleware())
+	router.HandleFunc("GET", "/healthz", HealthzHandler(serviceCheckers), DefaultMiddlewares(logger)...)
 	return NewServer(config, router)
 }
 
