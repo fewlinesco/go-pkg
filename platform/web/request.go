@@ -153,6 +153,9 @@ func decode(r *http.Request, val interface{}, options DecoderOptions) error {
 	}
 
 	if err := decoder.Decode(val); err != nil {
+		if err.Error() == "http: request body too large" {
+			return fmt.Errorf("%w", NewErrRequestBodyTooLarge())
+		}
 		switch e := err.(type) {
 		case *json.UnmarshalTypeError:
 			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
