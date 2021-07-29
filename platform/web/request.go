@@ -12,9 +12,9 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/fewlinesco/gojsonschema"
 	en "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
-	"github.com/xeipuuv/gojsonschema"
 	validator "gopkg.in/go-playground/validator.v9"
 	en_translations "gopkg.in/go-playground/validator.v9/translations/en"
 )

@@ -16,11 +16,11 @@ require (
 	github.com/cznic/sortutil v0.0.0-20181122101858-f5f958428db8 // indirect
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
 	github.com/cznic/zappy v0.0.0-20181122101859-ca47d358d4b1 // indirect
+	github.com/fewlinesco/gojsonschema v1.2.1-0.20210611123907-7f2b01b3214e
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/go-errors/errors v1.1.1 // indirect
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/jmoiron/sqlx v1.3.2-0.20210128211550-a1d5e6473423

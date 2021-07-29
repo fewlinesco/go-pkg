@@ -11,8 +11,6 @@ github.com/BurntSushi/toml
 # github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 ## explicit
 github.com/GuiaBolso/darwin
-# github.com/PuerkitoBio/goquery v1.5.1
-## explicit
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 github.com/alecthomas/template
 github.com/alecthomas/template/parse
@@ -40,6 +38,9 @@ github.com/cespare/xxhash/v2
 ## explicit
 # github.com/cznic/zappy v0.0.0-20181122101859-ca47d358d4b1
 ## explicit
+# github.com/fewlinesco/gojsonschema v1.2.1-0.20210611123907-7f2b01b3214e
+## explicit
+github.com/fewlinesco/gojsonschema
 # github.com/getsentry/sentry-go v0.7.0
 ## explicit
 github.com/getsentry/sentry-go
