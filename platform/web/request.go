@@ -61,7 +61,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 
 	jsonSchema := gojsonschema.NewReferenceLoader("file://" + filePath)
 
-	if err := validateRequestBodyAndDecode(request, model, options, jsonSchema); err != nil {
+	if err := validateAndDecodeRequestBody(request, model, options, jsonSchema); err != nil {
 		return err
 	}
 	return nil
@@ -72,13 +72,13 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, jsonSchemaBytes []byte, options DecoderOptions) error {
 	jsonSchema := gojsonschema.NewBytesLoader(jsonSchemaBytes)
 
-	if err := validateRequestBodyAndDecode(request, model, options, jsonSchema); err != nil {
+	if err := validateAndDecodeRequestBody(request, model, options, jsonSchema); err != nil {
 		return err
 	}
 	return nil
 }
 
-func validateRequestBodyAndDecode(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
+func validateAndDecodeRequestBody(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
 	bodyBytes, err := ioutil.ReadAll(request.Body)
 	if err != nil && err.Error() == "http: request body too large" {
 		return fmt.Errorf("%w", NewErrRequestBodyTooLarge())

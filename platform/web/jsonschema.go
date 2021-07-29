@@ -1,13 +1,11 @@
 package web
 
 import (
-	"errors"
 	"fmt"
 	"github.com/fewlinesco/gojsonschema"
-	"path"
-	"runtime"
 )
 
+// JSONSchemaAdditionalPropertyError is returned when the validation failed due to additional properties being present in the JSON input.
 type JSONSchemaAdditionalPropertyError struct {
 	Details ErrorDetails
 }
@@ -16,6 +14,7 @@ func (err JSONSchemaAdditionalPropertyError) Error() string {
 	return "the json input contains unknown keys"
 }
 
+// JSONSchemaMissingPropertyError is returned when the validation failed due to missing required properties in the JSON input.
 type JSONSchemaMissingPropertyError struct {
 	Details ErrorDetails
 }
@@ -24,6 +23,7 @@ func (err JSONSchemaMissingPropertyError) Error() string {
 	return "the json input is missing required keys"
 }
 
+// JSONSchemaValidationError is returned when the validation failed
 type JSONSchemaValidationError struct {
 	Details ErrorDetails
 }
@@ -32,20 +32,7 @@ func (err JSONSchemaValidationError) Error() string {
 	return "the json input is not valid against the json schema"
 }
 
-var (
-	ErrInvalidJSONSchemaFilePath = errors.New("the provided file path for the json schema is invalid")
-)
-
-func ValidateJSONAgainstSchemaWithFilePath(jsonData []byte, schemaPath string) error {
-	_, rootFile, _, ok := runtime.Caller(1)
-	if !ok {
-		return fmt.Errorf("%w", ErrInvalidJSONSchemaFilePath)
-	}
-	schemaPath = path.Join(path.Dir(rootFile), schemaPath)
-	jsonSchema := gojsonschema.NewReferenceLoader("file://" + schemaPath)
-	return validateJSONAgainstSchema(jsonData, jsonSchema)
-}
-
+// ValidateJSONAgainstSchema validates a JSON object against a JSON schema and returns validation errors if there are any.
 func ValidateJSONAgainstSchema(jsonData []byte, jsonSchema []byte) error {
 	return validateJSONAgainstSchema(jsonData, gojsonschema.NewBytesLoader(jsonSchema))
 }
