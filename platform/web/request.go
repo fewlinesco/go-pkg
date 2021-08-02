@@ -44,9 +44,32 @@ func init() {
 	})
 }
 
+// ParseJSONInput reads the request body, closes it and ensures it is valid JSON.
+func ParseJSONInput(r *http.Request) ([]byte, error) {
+	rawBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		if err.Error() == "http: request body too large" {
+			return nil, fmt.Errorf("parse json input failed: %w", NewErrRequestBodyTooLarge())
+		}
+		return nil, fmt.Errorf("parse json input failed: unable to read the request body: %v", err)
+	}
+	if err := r.Body.Close(); err != nil {
+		return nil, fmt.Errorf("cannot close request body: %v", err)
+	}
+	if valid := json.Valid(rawBody); !valid {
+		return nil, fmt.Errorf("parse json input failed: the provided json is invalid")
+	}
+
+	return rawBody, nil
+}
+
 // Decode reads the body of an HTTP request as JSON and fill a struct with its content. It's also in charge of validating the content of the struct based on gopkg.in/go-playground/validator.v9 validation tags.
 func Decode(r *http.Request, val interface{}) error {
-	return decode(r, val, DecoderOptions{AllowUnknownFields: false})
+	body, err := ParseJSONInput(r)
+	if err != nil {
+		return err
+	}
+	return decode(body, val, DecoderOptions{AllowUnknownFields: false})
 }
 
 // DecodeWithJSONSchema takes the path to a json schema and a http request
@@ -79,16 +102,15 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 }
 
 func validateAndDecodeRequestBody(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
-	bodyBytes, err := ioutil.ReadAll(request.Body)
-	if err != nil && err.Error() == "http: request body too large" {
-		return fmt.Errorf("%w", NewErrRequestBodyTooLarge())
+	body, err := ParseJSONInput(request)
+	if err != nil {
+		return err
 	}
 	if err := request.Body.Close(); err != nil {
 		return fmt.Errorf("cannot close request body: %v", err)
 	}
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
-	if err := validateJSONAgainstSchema(bodyBytes, jsonSchema); err != nil {
+	if err := validateJSONAgainstSchema(body, jsonSchema); err != nil {
 		var errMissingProperties JSONSchemaMissingPropertyError
 		if errors.As(err, &errMissingProperties) {
 			return fmt.Errorf("json schema validation error: %w", NewErrBadRequestResponse(errMissingProperties.Details))
@@ -104,24 +126,21 @@ func validateAndDecodeRequestBody(request *http.Request, model interface{}, opti
 		return fmt.Errorf("json schema validation error: %w", NewErrBadRequestResponse(nil))
 	}
 
-	if err := decode(request, model, options); err != nil {
+	if err := decode(body, model, options); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func decode(r *http.Request, val interface{}, options DecoderOptions) error {
-	decoder := json.NewDecoder(r.Body)
+func decode(input []byte, val interface{}, options DecoderOptions) error {
+	decoder := json.NewDecoder(bytes.NewBuffer(input))
 
 	if !options.AllowUnknownFields {
 		decoder.DisallowUnknownFields()
 	}
 
 	if err := decoder.Decode(val); err != nil {
-		if err.Error() == "http: request body too large" {
-			return fmt.Errorf("%w", NewErrRequestBodyTooLarge())
-		}
 		switch e := err.(type) {
 		case *json.UnmarshalTypeError:
 			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{
