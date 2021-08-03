@@ -40,8 +40,8 @@ var (
 	NotFoundMessage = NewErrorMessage("400000", "Endpoint not found")
 	// BadRequestMessage is the error message we return when we were unable to process the request
 	BadRequestMessage = NewErrorMessage("400001", "Bad request")
-	// UnmarshallableJSONMessage is the error message we return when an unexpected error took place
-	UnmarshallableJSONMessage = NewErrorMessage("400002", "the body must be a valid JSON")
+	// InvalidJSONMessage is the error message we return when an unexpected error took place
+	InvalidJSONMessage = NewErrorMessage("400002", "the body must be a valid JSON")
 	// MissingBodyMessage is the error message we return when the request body is empty
 	MissingBodyMessage = NewErrorMessage("400003", "the body is empty")
 	// InvalidRequestBodyContentMessage is the error message we return when the request body contains one or more invalid input parameters
@@ -80,11 +80,11 @@ func NewErrNotFoundResponse() error {
 	}
 }
 
-// NewErrUnmarshallableJSON is returned if we are unable to unmarshal the request body to a struct
-func NewErrUnmarshallableJSON() error {
+// NewErrInvalidJSON is returned if we are unable to unmarshal the request body to a struct
+func NewErrInvalidJSON() error {
 	return &Error{
 		HTTPCode:     http.StatusBadRequest,
-		ErrorMessage: UnmarshallableJSONMessage,
+		ErrorMessage: InvalidJSONMessage,
 	}
 }
 
@@ -116,9 +116,7 @@ func NewErrInvalidJSONSchemaFilePath() error {
 }
 
 // NewErrRequestBodyTooLarge is returned when the request body is larger than the limit set by using http.MaxBytesReader()
-func NewErrRequestBodyTooLarge() error {
-	return &Error{
-		HTTPCode:     http.StatusRequestEntityTooLarge,
-		ErrorMessage: RequestBodyTooLarge,
-	}
+var ErrRequestBodyTooLarge = &Error{
+	HTTPCode:     http.StatusRequestEntityTooLarge,
+	ErrorMessage: RequestBodyTooLarge,
 }
