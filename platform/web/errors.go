@@ -115,7 +115,7 @@ func NewErrInvalidJSONSchemaFilePath() error {
 	}
 }
 
-// NewErrRequestBodyTooLarge is returned when the request body is larger than the limit set by using http.MaxBytesReader()
+// ErrRequestBodyTooLarge is returned when the request body is larger than the limit set by using http.MaxBytesReader()
 var ErrRequestBodyTooLarge = &Error{
 	HTTPCode:     http.StatusRequestEntityTooLarge,
 	ErrorMessage: RequestBodyTooLarge,
