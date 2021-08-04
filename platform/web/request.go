@@ -68,7 +68,7 @@ func Decode(r *http.Request, val interface{}) error {
 	return decode(r, val, DecoderOptions{AllowUnknownFields: false})
 }
 
-// Deprecated: DecodeWithJSONSchema takes the path to a json schema and a http request
+// DecodeWithJSONSchema takes the path to a json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
 func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath string, options DecoderOptions) error {
 	_, rootFile, _, ok := runtime.Caller(1)
@@ -86,7 +86,7 @@ func DecodeWithJSONSchema(request *http.Request, model interface{}, filePath str
 	return nil
 }
 
-// Deprecated: DecodeWithEmbeddedJSONSchema takes json schema and a http request
+// DecodeWithEmbeddedJSONSchema takes json schema and a http request
 // And returns an error when the request's payload does not match the JSON schema
 func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, jsonSchemaBytes []byte, options DecoderOptions) error {
 	jsonSchema := gojsonschema.NewBytesLoader(jsonSchemaBytes)
