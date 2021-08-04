@@ -9,21 +9,14 @@ import (
 	"testing"
 )
 
-type expectedModel struct {
-	ID       string            `json:"id"`
-	Code     string            `json:"code"`
-	DataType string            `json:"datatype"`
-	Name     map[string]string `json:"name"`
-}
-
-type validateAgainstJsonSchemaTestData struct {
+type validateAgainstJSONSchemaTestData struct {
 	Name             string
 	JSONInput        string
-	ValidateResponse func(t *testing.T, outcome error, data validateAgainstJsonSchemaTestData)
+	ValidateResponse func(t *testing.T, outcome error, data validateAgainstJSONSchemaTestData)
 	ExpectedError    error
 }
 
-var testCases = []validateAgainstJsonSchemaTestData{
+var testCases = []validateAgainstJSONSchemaTestData{
 	{
 		Name:          "when_the_decoding_happens_without_an_error",
 		JSONInput:     `{"code": "code", "id": "d43c45b0-f420-4de9-8745-6e3840ab39fd", "datatype": "integer"}`,
