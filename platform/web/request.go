@@ -99,8 +99,11 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 
 func validateRequestPayload(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
 	body, err := io.ReadAll(request.Body)
-	if err.Error() == "http: request body too large" {
-		return fmt.Errorf("parse json input failed: %w", ErrRequestBodyTooLarge)
+	if err != nil {
+		if err.Error() == "http: request body too large" {
+			return fmt.Errorf("valid request payload failed: %w", ErrRequestBodyTooLarge)
+		}
+		return fmt.Errorf("could not read request body: %v", err)
 	}
 	request.Body = io.NopCloser(bytes.NewBuffer(body))
 	payload := gojsonschema.NewBytesLoader(body)
