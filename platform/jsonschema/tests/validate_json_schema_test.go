@@ -110,7 +110,7 @@ func TestValidateJSONAgainstSchema(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 
-			if err := jsonschema.ValidateJSONAgainstSchema([]byte(tc.JSONInput), jsonSchema); err != nil {
+			if err := jsonschema.ValidateJSON([]byte(tc.JSONInput), jsonSchema); err != nil {
 				if tc.ExpectedError == nil {
 					t.Fatalf("the request body failed the validation but the test did not expect this: %v", err)
 				}

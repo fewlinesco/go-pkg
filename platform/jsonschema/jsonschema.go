@@ -32,8 +32,8 @@ func (err ValidationError) Error() string {
 	return "the json input is not valid against the JSON schema"
 }
 
-// ValidateJSONAgainstSchema validate some json data against a json schema and return detailed validation errors if any is present.
-func ValidateJSONAgainstSchema(jsonData []byte, jsonSchema []byte) error {
+// ValidateJSON validate some json data against a json schema and return detailed validation errors if any is present.
+func ValidateJSON(jsonData []byte, jsonSchema []byte) error {
 	dataLoader := gojsonschema.NewBytesLoader(jsonData)
 	schemaLoader := gojsonschema.NewBytesLoader(jsonSchema)
 	result, err := gojsonschema.Validate(schemaLoader, dataLoader)
