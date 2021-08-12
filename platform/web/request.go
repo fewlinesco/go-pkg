@@ -23,6 +23,9 @@ var validate = validator.New()
 var translator *ut.UniversalTranslator
 var fieldRegex = regexp.MustCompile(`json: unknown field "([^"]+)"`)
 
+// ErrRequestBodyTooLargeMessage is the error returned by the http.MaxBytesReader() when reading from a reader over the set limit
+var ErrRequestBodyTooLargeMessage = "http: request body too large"
+
 // DecoderOptions describes a set of options you can pass to alter the behaviour of the decoders
 // AllowUnknownFields ensures that the decoder can pass the json even if it contains a field unknown to the strict
 type DecoderOptions struct {
@@ -78,7 +81,13 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 }
 
 func validateRequestPayload(request *http.Request, model interface{}, options DecoderOptions, jsonSchema gojsonschema.JSONLoader) error {
-	body, _ := io.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		if err.Error() == ErrRequestBodyTooLargeMessage {
+			return fmt.Errorf("%w", NewErrRequestBodyTooLarge())
+		}
+		return err
+	}
 	request.Body = io.NopCloser(bytes.NewBuffer(body))
 	payload := gojsonschema.NewBytesLoader(body)
 
@@ -147,6 +156,9 @@ func decode(r *http.Request, val interface{}, options DecoderOptions) error {
 	}
 
 	if err := decoder.Decode(val); err != nil {
+		if err.Error() == ErrRequestBodyTooLargeMessage {
+			return fmt.Errorf("%w", NewErrRequestBodyTooLarge())
+		}
 		switch e := err.(type) {
 		case *json.UnmarshalTypeError:
 			return fmt.Errorf("%v: %w", err, NewErrBadRequestResponse(ErrorDetails{

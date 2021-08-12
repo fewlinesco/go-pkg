@@ -48,6 +48,8 @@ var (
 	InvalidRequestBodyContentMessage = NewErrorMessage("100001", "one ore more of the input parameters was incorrect")
 	// InvalidJSONSchemaFilePath is the error message we return when we were unable to find a json schema at the specified path
 	InvalidJSONSchemaFilePath = NewErrorMessage("100005", "the provided file path for the json schema is invalid")
+	// RequestBodyTooLarge is the error message we return when the request body is larger than the limit set when using http.MaxBytesReader()
+	RequestBodyTooLarge = NewErrorMessage("100006", "the request body is larger than the set size limit")
 )
 
 // NewErrUnmanagedResponse [deprecated] shouldn't be used outside this package. Define application specific errors instead
@@ -110,5 +112,13 @@ func NewErrInvalidJSONSchemaFilePath() error {
 	return &Error{
 		ErrorMessage: InvalidJSONSchemaFilePath,
 		HTTPCode:     http.StatusInternalServerError,
+	}
+}
+
+// NewErrRequestBodyTooLarge is returned when the request body is larger than the limit set by using http.MaxBytesReader()
+func NewErrRequestBodyTooLarge() error {
+	return &Error{
+		HTTPCode:     http.StatusRequestEntityTooLarge,
+		ErrorMessage: RequestBodyTooLarge,
 	}
 }
