@@ -136,7 +136,7 @@ func TestDecodeWithJSONSchemaWithInvalidFilePath(t *testing.T) {
 		request := prepareRequest(t, body)
 		var result expectedModel
 		if err := web.DecodeWithJSONSchema(request, &result, "testdata/json_schema/json_schema_with_definition.json", web.DecoderOptions{}); err != nil {
-			checkError(t, web.NewErrBadRequestResponse(nil), err)
+			checkError(t, web.NewErrInvalidJSONSchemaFilePath(), err)
 			return
 		}
 		t.Fatalf("the request body passed the validation but it should have returned an error")
