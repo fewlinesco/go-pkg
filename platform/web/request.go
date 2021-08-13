@@ -1,7 +1,6 @@
 package web
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -104,7 +103,6 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 		}
 		return fmt.Errorf("could not read request body: %v", err)
 	}
-	request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if err := jsonschema.ValidateJSON(body, jsonSchema); err != nil {
 		switch unwrappedErr := errors.Unwrap(err).(type) {
