@@ -49,7 +49,7 @@ func init() {
 	})
 }
 
-// ParseJSONInput takes in a ReadCloser, closes it and ensures it is valid JSON.
+// ParseJSONInput takes in a Request, reads and closes the body and ensures it is valid JSON.
 func ParseJSONInput(request *http.Request) ([]byte, error) {
 	rawJSONInput, err := ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -117,8 +117,9 @@ func DecodeWithEmbeddedJSONSchema(request *http.Request, model interface{}, json
 		}
 	}
 
-	if err := decode(request, model, options); err != nil {
-		return err
+	err = json.Unmarshal(body, &model)
+	if err != nil {
+		return fmt.Errorf("json is valid against json schema, but cannot be unmarshalled to the provided struct: %v", err)
 	}
 
 	return nil
