@@ -13,7 +13,6 @@ import (
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
 	v := ctx.Value(KeyValues).(*Values)
 	v.StatusCode = statusCode
-	w.Header().Set("Fewlines-TraceID", v.TraceID)
 
 	if statusCode == http.StatusNoContent {
 		w.WriteHeader(statusCode)

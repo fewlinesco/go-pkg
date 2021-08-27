@@ -96,6 +96,8 @@ func (a *Router) defineHandler(handler Handler, middlewares ...Middleware) http.
 			Now:     time.Now(),
 		}
 
+		w.Header().Set("Fewlines-TraceID", v.TraceID)
+
 		ctx = context.WithValue(ctx, KeyValues, &v)
 
 		monitoring.AddTagToScope("Trace-ID", v.TraceID)
